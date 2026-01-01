@@ -62,7 +62,7 @@ emcc ${SOURCES[@]} \
     -o "$OUT_DIR/swisseph.js" \
     -s WASM=1 \
     -s EXPORTED_FUNCTIONS="$EXPORTED_FUNCTIONS" \
-    -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","UTF8ToString","stringToUTF8","lengthBytesUTF8"]' \
+    -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","getValue","setValue","UTF8ToString","stringToUTF8","lengthBytesUTF8","allocateUTF8","FS"]' \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s MODULARIZE=1 \
     -s EXPORT_NAME="SwissEphModule" \

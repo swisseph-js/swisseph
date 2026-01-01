@@ -281,6 +281,38 @@ Very reasonable for a high-precision astronomy library!
 
 **Both packages share the same modern TypeScript API!**
 
+## Development
+
+### Rebuilding the WASM Module
+
+If you modify the C source code or need to update the WASM build (e.g., to export additional runtime methods), you'll need to rebuild:
+
+**Prerequisites:**
+- [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) installed and activated
+
+**Steps:**
+
+```bash
+# Install Emscripten (first time only)
+git clone https://github.com/emscripten-core/emsdk.git
+cd emsdk
+./emsdk install latest
+./emsdk activate latest
+source ./emsdk_env.sh
+
+# Rebuild WASM module
+cd packages/browser
+./build-wasm.sh
+
+# Build TypeScript
+npm run build
+```
+
+The build script compiles the native Swiss Ephemeris C code to WebAssembly and exports:
+- All calculation functions
+- Runtime methods: `ccall`, `cwrap`, `FS` (filesystem), `allocateUTF8`
+- Virtual filesystem support for loading ephemeris files
+
 ## License
 
 AGPL-3.0 (same as Swiss Ephemeris)

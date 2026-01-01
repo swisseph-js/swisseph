@@ -96,6 +96,18 @@
 
     <div id="status" class="loading">Loading Swiss Ephemeris WASM module...</div>
 
+    <div id="ephemeris-controls" style="background: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none;">
+        <h3 style="margin-top: 0;">Ephemeris Options</h3>
+        <p>Currently using: <strong id="current-ephemeris">Moshier (built-in)</strong></p>
+        <button id="load-swiss-btn" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+            Load Swiss Ephemeris (~2MB)
+        </button>
+        <button id="rerun-tests-btn" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; display: none;">
+            Re-run All Tests
+        </button>
+        <div id="load-status" style="margin-top: 10px; font-style: italic; color: #666;"></div>
+    </div>
+
     <div id="summary">
         <div class="summary-stat pass">Passed: <span id="passed-count">0</span></div>
         <div class="summary-stat fail">Failed: <span id="failed-count">0</span></div>
@@ -105,7 +117,7 @@
     <div id="test-results"></div>
 
     <script type="module">
-        import { SwissEphemeris, Planet, CalendarType, CalculationFlag, HouseSystem } from '../dist/swisseph-browser.js';
+        import { SwissEphemeris, Planet, Asteroid, CalendarType, CalculationFlag, HouseSystem } from '../dist/swisseph-browser.js';
 
         // Simple test framework
         class TestRunner {
@@ -216,11 +228,74 @@
         // Initialize WASM module
         const swe = new SwissEphemeris();
         const runner = new TestRunner();
+        let swissEphemerisLoaded = false;
 
         try {
             await swe.init();
             document.getElementById('status').className = 'ready';
             document.getElementById('status').textContent = `✓ Swiss Ephemeris WASM initialized: ${swe.version()}`;
+
+            // Show ephemeris controls
+            document.getElementById('ephemeris-controls').style.display = 'block';
+
+            // Function to run all tests
+            async function runAllTests() {
+                // Clear previous results
+                const resultsDiv = document.getElementById('test-results');
+                resultsDiv.innerHTML = '';
+                runner.stats = { passed: 0, failed: 0, total: 0 };
+                runner.updateSummary();
+
+                // Run tests
+                await runner.run();
+            }
+
+            // Setup Swiss Ephemeris loading
+            const loadSwissBtn = document.getElementById('load-swiss-btn');
+            const rerunTestsBtn = document.getElementById('rerun-tests-btn');
+            const loadStatus = document.getElementById('load-status');
+            const currentEphemeris = document.getElementById('current-ephemeris');
+
+            loadSwissBtn.addEventListener('click', async () => {
+                if (swissEphemerisLoaded) return;
+
+                loadSwissBtn.disabled = true;
+                loadSwissBtn.textContent = 'Loading...';
+                loadStatus.textContent = 'Downloading Swiss Ephemeris files from jsDelivr CDN...';
+
+                try {
+                    await swe.loadStandardEphemeris();
+                    swissEphemerisLoaded = true;
+                    loadSwissBtn.textContent = '✓ Swiss Ephemeris Loaded';
+                    loadSwissBtn.style.background = '#28a745';
+                    loadStatus.textContent = 'Swiss Ephemeris loaded! Re-running tests...';
+                    loadStatus.style.color = '#666';
+                    currentEphemeris.textContent = 'Swiss Ephemeris (loaded from CDN)';
+
+                    // Auto re-run tests after loading
+                    setTimeout(async () => {
+                        await runAllTests();
+                        loadStatus.textContent = 'Swiss Ephemeris loaded successfully! All tests re-run with new ephemeris.';
+                    }, 500);
+                } catch (error) {
+                    loadSwissBtn.disabled = false;
+                    loadSwissBtn.textContent = 'Load Swiss Ephemeris (~2MB)';
+                    loadStatus.textContent = `Error loading: ${error.message}`;
+                    loadStatus.style.color = '#dc3545';
+                }
+            });
+
+            // Re-run tests button
+            rerunTestsBtn.addEventListener('click', async () => {
+                rerunTestsBtn.disabled = true;
+                rerunTestsBtn.textContent = 'Running...';
+                await runAllTests();
+                rerunTestsBtn.disabled = false;
+                rerunTestsBtn.textContent = 'Re-run All Tests';
+            });
+
+            // Show re-run button after initial test run
+            rerunTestsBtn.style.display = 'inline-block';
 
             // Julian Day Tests (from julday.test.ts)
             runner.describe('julianDay calculations', () => {
@@ -356,10 +431,101 @@
                     expect(houses.mc).toBeGreaterThanOrEqual(0);
                     expect(houses.mc).toBeLessThan(360);
                 });
+
+                runner.test('should work with different house systems', () => {
+                    const jd = swe.julianDay(2007, 3, 3, 12);
+
+                    const placidus = swe.calculateHouses(jd, 40.7128, -74.0060, HouseSystem.Placidus);
+                    const koch = swe.calculateHouses(jd, 40.7128, -74.0060, HouseSystem.Koch);
+                    const wholeSign = swe.calculateHouses(jd, 40.7128, -74.0060, HouseSystem.WholeSign);
+
+                    // Different systems should give different house cusps
+                    expect(placidus.cusps[1]).toBeTruthy();
+                    expect(koch.cusps[1]).toBeTruthy();
+                    expect(wholeSign.cusps[1]).toBeTruthy();
+                });
             });
 
-            // Run all tests
-            await runner.run();
+            // Swiss Ephemeris comparison tests
+            runner.describe('Swiss Ephemeris vs Moshier', () => {
+                runner.test('should calculate similar Sun positions (within 1 arcsecond)', () => {
+                    const jd = swe.julianDay(2007, 3, 3, 12);
+
+                    const sunMoshier = swe.calculatePosition(jd, Planet.Sun, CalculationFlag.MoshierEphemeris);
+                    const sunSwiss = swe.calculatePosition(jd, Planet.Sun, CalculationFlag.SwissEphemeris);
+
+                    // Difference should be less than 1 arcsecond (1/3600 degree)
+                    const diff = Math.abs(sunMoshier.longitude - sunSwiss.longitude);
+                    expect(diff).toBeLessThan(1/3600);
+                });
+
+                runner.test('should calculate similar Moon positions (within a few arcseconds)', () => {
+                    const jd = swe.julianDay(2007, 3, 3, 12);
+
+                    const moonMoshier = swe.calculatePosition(jd, Planet.Moon, CalculationFlag.MoshierEphemeris);
+                    const moonSwiss = swe.calculatePosition(jd, Planet.Moon, CalculationFlag.SwissEphemeris);
+
+                    // Moon moves faster, allow slightly larger difference (few arcseconds)
+                    const diff = Math.abs(moonMoshier.longitude - moonSwiss.longitude);
+                    expect(diff).toBeLessThan(10/3600); // 10 arcseconds
+                });
+            });
+
+            // Asteroid tests (require Swiss Ephemeris files loaded)
+            runner.describe('Asteroid calculations (requires Swiss Ephemeris loaded)', () => {
+                runner.test('should calculate Chiron position when Swiss Ephemeris loaded', () => {
+                    if (!swissEphemerisLoaded) {
+                        throw new Error('Swiss Ephemeris not loaded - click "Load Swiss Ephemeris" button first');
+                    }
+
+                    const jd = swe.julianDay(2007, 3, 3, 12);
+                    const chiron = swe.calculatePosition(jd, Asteroid.Chiron, CalculationFlag.SwissEphemeris);
+
+                    expect(chiron).toHaveProperty('longitude');
+                    expect(chiron).toHaveProperty('latitude');
+                    expect(chiron).toHaveProperty('distance');
+                    expect(chiron.longitude).toBeGreaterThanOrEqual(0);
+                    expect(chiron.longitude).toBeLessThan(360);
+                });
+
+                runner.test('should calculate Ceres position when Swiss Ephemeris loaded', () => {
+                    if (!swissEphemerisLoaded) {
+                        throw new Error('Swiss Ephemeris not loaded - click "Load Swiss Ephemeris" button first');
+                    }
+
+                    const jd = swe.julianDay(2007, 3, 3, 12);
+                    const ceres = swe.calculatePosition(jd, Asteroid.Ceres, CalculationFlag.SwissEphemeris);
+
+                    expect(ceres).toHaveProperty('longitude');
+                    expect(ceres.longitude).toBeGreaterThanOrEqual(0);
+                    expect(ceres.longitude).toBeLessThan(360);
+                });
+
+                runner.test('should calculate multiple asteroids', () => {
+                    if (!swissEphemerisLoaded) {
+                        throw new Error('Swiss Ephemeris not loaded - click "Load Swiss Ephemeris" button first');
+                    }
+
+                    const jd = swe.julianDay(2007, 3, 3, 12);
+                    const asteroids = [
+                        Asteroid.Chiron,
+                        Asteroid.Pholus,
+                        Asteroid.Ceres,
+                        Asteroid.Pallas,
+                        Asteroid.Juno,
+                        Asteroid.Vesta
+                    ];
+
+                    asteroids.forEach(asteroid => {
+                        const position = swe.calculatePosition(jd, asteroid, CalculationFlag.SwissEphemeris);
+                        expect(position.longitude).toBeGreaterThanOrEqual(0);
+                        expect(position.longitude).toBeLessThan(360);
+                    });
+                });
+            });
+
+            // Run all tests initially
+            await runAllTests();
 
         } catch (error) {
             document.getElementById('status').className = 'error';

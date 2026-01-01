@@ -1,0 +1,22 @@
+# Source files (only ship dist/)
+src/
+test/
+*.ts
+!*.d.ts
+
+# Build tools
+build-wasm.sh
+build.mjs
+tsconfig.json
+
+# Documentation (keep README.md only)
+docs/
+BUILDING.md
+FEATURES.md
+SUMMARY.md
+
+# Development files
+.DS_Store
+*.log
+node_modules/
+.gitignore

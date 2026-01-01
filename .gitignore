@@ -1,0 +1,19 @@
+node_modules/
+package-lock.json
+dist/
+build/
+*.log
+.DS_Store
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.temp-wasm/
+*.wasm.tmp
+# Editor files
+.cursor/
+.claude/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

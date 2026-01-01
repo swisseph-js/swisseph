@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@swisseph/core": ["../core/src"],
+      "@swisseph/node": ["./src"]
+    }
+  },
+  "include": ["tests/**/*", "src/**/*"]
+}

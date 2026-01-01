@@ -1,0 +1,48 @@
+{
+  "name": "@swisseph/core",
+  "version": "1.0.1",
+  "description": "TypeScript types and interfaces for Swiss Ephemeris",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "swisseph",
+    "swiss-ephemeris",
+    "ephemeris",
+    "astrology",
+    "astronomy",
+    "types",
+    "typescript",
+    "planets",
+    "celestial"
+  ],
+  "author": "",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swisseph-js/swisseph.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

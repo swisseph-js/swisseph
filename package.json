@@ -1,0 +1,46 @@
+{
+  "name": "swisseph-js",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Swiss Ephemeris monorepo - TypeScript astronomical calculations",
+  "scripts": {
+    "build": "pnpm -r build",
+    "build:core": "pnpm --filter @swisseph/core build",
+    "build:node": "pnpm --filter @swisseph/node build",
+    "build:browser": "pnpm --filter @swisseph/browser build",
+    "test": "pnpm --filter @swisseph/node test",
+    "clean": "pnpm -r clean && rm -rf node_modules"
+  },
+  "keywords": [
+    "astronomy",
+    "astrology",
+    "ephemeris",
+    "swiss-ephemeris",
+    "planets",
+    "celestial",
+    "julian-day",
+    "typescript",
+    "type-safe",
+    "birth-chart",
+    "horoscope",
+    "zodiac",
+    "natal-chart",
+    "eclipses",
+    "houses",
+    "planetary-positions"
+  ],
+  "author": "",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "node-addon-api": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.6",
+    "jest": "^29.7.0",
+    "node-gyp": "^10.0.1",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

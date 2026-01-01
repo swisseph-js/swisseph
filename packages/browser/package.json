@@ -1,0 +1,61 @@
+{
+  "name": "@swisseph/browser",
+  "version": "1.0.0",
+  "description": "Swiss Ephemeris for browsers - WebAssembly astronomical calculations",
+  "type": "module",
+  "main": "dist/swisseph-browser.js",
+  "module": "dist/swisseph-browser.js",
+  "types": "dist/swisseph-browser.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/swisseph-browser.d.ts",
+      "import": "./dist/swisseph-browser.js",
+      "default": "./dist/swisseph-browser.js"
+    },
+    "./types/*": "./dist/types/*"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run build:js",
+    "build:js": "node build.mjs",
+    "build:wasm": "./build-wasm.sh",
+    "build:all": "npm run build:js && npm run build:wasm",
+    "clean": "rm -rf dist",
+    "dev": "http-server -p 8000 -c-1",
+    "test": "npm run dev & echo 'Open http://localhost:8000/test/calculations.html in your browser to run tests'",
+    "prepublishOnly": "npm run build:all"
+  },
+  "keywords": [
+    "astronomy",
+    "astrology",
+    "ephemeris",
+    "swiss-ephemeris",
+    "webassembly",
+    "wasm",
+    "browser",
+    "planets",
+    "celestial"
+  ],
+  "author": "",
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swisseph-js/swisseph.git",
+    "directory": "packages/browser"
+  },
+  "homepage": "https://github.com/swisseph-js/swisseph/tree/main/packages/browser",
+  "bugs": {
+    "url": "https://github.com/swisseph-js/swisseph/issues"
+  },
+  "dependencies": {
+    "@swisseph/core": "^1.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.2",
+    "http-server": "^14.1.1",
+    "typescript": "^5.3.3"
+  }
+}

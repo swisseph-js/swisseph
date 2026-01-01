@@ -1,0 +1,210 @@
+name: Publish Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - core
+          - node
+          - browser
+          - all
+      version:
+        description: 'Version bump type (patch/minor/major) or specific version (e.g., 1.2.3). Leave empty to use current version.'
+        required: false
+        type: string
+        default: ''
+  release:
+    types: [published]
+  push:
+    tags:
+      - '**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Verify npm authentication
+      - name: Verify npm authentication
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "Error: NPM_TOKEN secret is not set!"
+            echo "Please add NPM_TOKEN to your repository secrets."
+            exit 1
+          fi
+          npm whoami || (echo "Failed to authenticate with npm" && exit 1)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Setup Emscripten for browser package
+      - name: Setup Emscripten
+        if: |
+          (github.event_name == 'workflow_dispatch' && (inputs.package == 'browser' || inputs.package == 'all')) ||
+          (github.event_name == 'release' || github.event_name == 'push')
+        uses: mymindstorm/setup-emsdk@v12
+        with:
+          version: 'latest'
+
+      # Determine which packages to publish
+      - name: Determine packages to publish
+        id: packages
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PACKAGE="${{ inputs.package }}"
+          else
+            # For releases/tags, publish all packages
+            PACKAGE="all"
+          fi
+          
+          if [ "$PACKAGE" == "all" ]; then
+            echo "packages=core,node,browser" >> $GITHUB_OUTPUT
+            echo "publish_core=true" >> $GITHUB_OUTPUT
+            echo "publish_node=true" >> $GITHUB_OUTPUT
+            echo "publish_browser=true" >> $GITHUB_OUTPUT
+          elif [ "$PACKAGE" == "core" ]; then
+            echo "packages=core" >> $GITHUB_OUTPUT
+            echo "publish_core=true" >> $GITHUB_OUTPUT
+            echo "publish_node=false" >> $GITHUB_OUTPUT
+            echo "publish_browser=false" >> $GITHUB_OUTPUT
+          elif [ "$PACKAGE" == "node" ]; then
+            echo "packages=core,node" >> $GITHUB_OUTPUT
+            echo "publish_core=true" >> $GITHUB_OUTPUT
+            echo "publish_node=true" >> $GITHUB_OUTPUT
+            echo "publish_browser=false" >> $GITHUB_OUTPUT
+          elif [ "$PACKAGE" == "browser" ]; then
+            echo "packages=core,browser" >> $GITHUB_OUTPUT
+            echo "publish_core=true" >> $GITHUB_OUTPUT
+            echo "publish_node=false" >> $GITHUB_OUTPUT
+            echo "publish_browser=true" >> $GITHUB_OUTPUT
+          fi
+
+      # Bump versions if specified
+      - name: Bump versions
+        if: |
+          github.event_name == 'workflow_dispatch' && inputs.version != ''
+        shell: bash
+        run: |
+          VERSION="${{ inputs.version }}"
+          
+          if [ "${{ steps.packages.outputs.publish_core }}" == "true" ]; then
+            cd packages/core
+            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              pnpm version "$VERSION" --no-git-tag-version
+            else
+              pnpm version "$VERSION" --no-git-tag-version
+            fi
+            cd ../..
+          fi
+          
+          if [ "${{ steps.packages.outputs.publish_node }}" == "true" ]; then
+            cd packages/node
+            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              pnpm version "$VERSION" --no-git-tag-version
+            else
+              pnpm version "$VERSION" --no-git-tag-version
+            fi
+            cd ../..
+          fi
+          
+          if [ "${{ steps.packages.outputs.publish_browser }}" == "true" ]; then
+            cd packages/browser
+            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              pnpm version "$VERSION" --no-git-tag-version
+            else
+              pnpm version "$VERSION" --no-git-tag-version
+            fi
+            cd ../..
+          fi
+
+      # Build and publish @swisseph/core (must be first)
+      - name: Build and publish @swisseph/core
+        if: steps.packages.outputs.publish_core == 'true'
+        run: |
+          echo "Building @swisseph/core..."
+          pnpm --filter @swisseph/core build
+          
+          echo "Publishing @swisseph/core..."
+          pnpm --filter @swisseph/core publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Build and publish @swisseph/node
+      - name: Build and publish @swisseph/node
+        if: steps.packages.outputs.publish_node == 'true'
+        run: |
+          echo "Building @swisseph/node..."
+          pnpm --filter @swisseph/node build
+          
+          echo "Publishing @swisseph/node..."
+          pnpm --filter @swisseph/node publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Build and publish @swisseph/browser
+      - name: Build and publish @swisseph/browser
+        if: steps.packages.outputs.publish_browser == 'true'
+        run: |
+          echo "Building @swisseph/browser..."
+          pnpm --filter @swisseph/browser run build:all
+          
+          echo "Publishing @swisseph/browser..."
+          pnpm --filter @swisseph/browser publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Summary
+      - name: Publish summary
+        if: always()
+        run: |
+          echo "## Publishing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Published packages:" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.packages.outputs.publish_core }}" == "true" ]; then
+            echo "- ✅ @swisseph/core" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.packages.outputs.publish_node }}" == "true" ]; then
+            echo "- ✅ @swisseph/node" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ steps.packages.outputs.publish_browser }}" == "true" ]; then
+            echo "- ✅ @swisseph/browser" >> $GITHUB_STEP_SUMMARY
+          fi
+

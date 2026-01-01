@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swiss Ephemeris WASM - Calculation Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        #status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        #status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        #status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+        #status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .test-suite {
+            background: white;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-suite h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .test {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test.pass {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+        .test.fail {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-error {
+            color: #dc3545;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        #summary {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+        .summary-stat {
+            display: inline-block;
+            margin-right: 20px;
+            font-size: 18px;
+        }
+        .summary-stat.pass {
+            color: #28a745;
+        }
+        .summary-stat.fail {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>Swiss Ephemeris WASM - Calculation Tests</h1>
+
+    <div id="status" class="loading">Loading Swiss Ephemeris WASM module...</div>
+
+    <div id="summary">
+        <div class="summary-stat pass">Passed: <span id="passed-count">0</span></div>
+        <div class="summary-stat fail">Failed: <span id="failed-count">0</span></div>
+        <div class="summary-stat">Total: <span id="total-count">0</span></div>
+    </div>
+
+    <div id="test-results"></div>
+
+    <script type="module">
+        import { SwissEphemeris, Planet, CalendarType, CalculationFlag, HouseSystem } from '../dist/swisseph-browser.js';
+
+        // Simple test framework
+        class TestRunner {
+            constructor() {
+                this.suites = [];
+                this.currentSuite = null;
+                this.stats = { passed: 0, failed: 0, total: 0 };
+            }
+
+            describe(name, fn) {
+                this.currentSuite = { name, tests: [] };
+                this.suites.push(this.currentSuite);
+                fn();
+                this.currentSuite = null;
+            }
+
+            test(name, fn) {
+                if (!this.currentSuite) throw new Error('test() must be called inside describe()');
+                this.currentSuite.tests.push({ name, fn });
+            }
+
+            async run() {
+                const resultsDiv = document.getElementById('test-results');
+
+                for (const suite of this.suites) {
+                    const suiteDiv = document.createElement('div');
+                    suiteDiv.className = 'test-suite';
+                    suiteDiv.innerHTML = `<h2>${suite.name}</h2>`;
+
+                    for (const test of suite.tests) {
+                        this.stats.total++;
+                        const testDiv = document.createElement('div');
+                        testDiv.className = 'test';
+
+                        try {
+                            await test.fn();
+                            testDiv.classList.add('pass');
+                            testDiv.innerHTML = `<div class="test-name">✓ ${test.name}</div>`;
+                            this.stats.passed++;
+                        } catch (error) {
+                            testDiv.classList.add('fail');
+                            testDiv.innerHTML = `
+                                <div class="test-name">✗ ${test.name}</div>
+                                <div class="test-error">${error.message}</div>
+                            `;
+                            this.stats.failed++;
+                        }
+
+                        suiteDiv.appendChild(testDiv);
+                    }
+
+                    resultsDiv.appendChild(suiteDiv);
+                }
+
+                this.updateSummary();
+            }
+
+            updateSummary() {
+                document.getElementById('passed-count').textContent = this.stats.passed;
+                document.getElementById('failed-count').textContent = this.stats.failed;
+                document.getElementById('total-count').textContent = this.stats.total;
+            }
+        }
+
+        // Assertion helpers
+        function expect(actual) {
+            return {
+                toBe(expected) {
+                    if (actual !== expected) {
+                        throw new Error(`Expected ${expected} but got ${actual}`);
+                    }
+                },
+                toBeCloseTo(expected, precision = 10) {
+                    const diff = Math.abs(actual - expected);
+                    const tolerance = Math.pow(10, -precision);
+                    if (diff > tolerance) {
+                        throw new Error(`Expected ${expected} (±${tolerance}) but got ${actual} (diff: ${diff})`);
+                    }
+                },
+                toBeGreaterThan(expected) {
+                    if (actual <= expected) {
+                        throw new Error(`Expected ${actual} to be greater than ${expected}`);
+                    }
+                },
+                toBeLessThan(expected) {
+                    if (actual >= expected) {
+                        throw new Error(`Expected ${actual} to be less than ${expected}`);
+                    }
+                },
+                toBeGreaterThanOrEqual(expected) {
+                    if (actual < expected) {
+                        throw new Error(`Expected ${actual} to be >= ${expected}`);
+                    }
+                },
+                toHaveProperty(prop) {
+                    if (!(prop in actual)) {
+                        throw new Error(`Expected object to have property ${prop}`);
+                    }
+                },
+                toBeTruthy() {
+                    if (!actual) {
+                        throw new Error(`Expected truthy value but got ${actual}`);
+                    }
+                }
+            };
+        }
+
+        // Initialize WASM module
+        const swe = new SwissEphemeris();
+        const runner = new TestRunner();
+
+        try {
+            await swe.init();
+            document.getElementById('status').className = 'ready';
+            document.getElementById('status').textContent = `✓ Swiss Ephemeris WASM initialized: ${swe.version()}`;
+
+            // Julian Day Tests (from julday.test.ts)
+            runner.describe('julianDay calculations', () => {
+                runner.test('should convert date to Julian day - basic', () => {
+                    const jd = swe.julianDay(2002, 1, 1);
+                    expect(jd).toBeCloseTo(2452275.5, 10);
+                });
+
+                runner.test('should handle time of day correctly', () => {
+                    const jd = swe.julianDay(2002, 1, 1, 12.0);
+                    expect(jd).toBeCloseTo(2452276.0, 10);
+                });
+
+                runner.test('should use enum for calendar type', () => {
+                    const gregorian = swe.julianDay(2002, 1, 1, 0, CalendarType.Gregorian);
+                    const julian = swe.julianDay(2002, 1, 1, 0, CalendarType.Julian);
+
+                    // Gregorian and Julian calendars differ by more than 0.1 days
+                    const diff = Math.abs(gregorian - julian);
+                    expect(diff).toBeGreaterThan(0.1);
+                });
+
+                runner.test('should default to Gregorian calendar', () => {
+                    const jd1 = swe.julianDay(2002, 1, 1);
+                    const jd2 = swe.julianDay(2002, 1, 1, 0, CalendarType.Gregorian);
+                    expect(jd1).toBeCloseTo(jd2, 10);
+                });
+
+                runner.test('should handle fractional hours', () => {
+                    const jd1 = swe.julianDay(2002, 1, 1, 0);
+                    const jd2 = swe.julianDay(2002, 1, 1, 0.5);
+                    expect(jd2 - jd1).toBeCloseTo(0.5 / 24, 6);
+                });
+
+                runner.test('pyswisseph compatible example', () => {
+                    const jd = swe.julianDay(2007, 3, 3);
+                    expect(jd).toBeCloseTo(2454162.5, 10);
+                });
+            });
+
+            // Reverse Julian Day Tests (from revjul.test.ts)
+            runner.describe('julianDayToDate conversions', () => {
+                runner.test('should convert Julian day back to date', () => {
+                    const date = swe.julianDayToDate(2452275.5);
+                    expect(date.year).toBe(2002);
+                    expect(date.month).toBe(1);
+                    expect(date.day).toBe(1);
+                    expect(date.hour).toBeCloseTo(0.0, 6);
+                });
+
+                runner.test('should handle time correctly', () => {
+                    const date = swe.julianDayToDate(2452276.0);
+                    expect(date.year).toBe(2002);
+                    expect(date.month).toBe(1);
+                    expect(date.day).toBe(1);
+                    expect(date.hour).toBeCloseTo(12.0, 6);
+                });
+
+                runner.test('should round-trip correctly', () => {
+                    const jd1 = swe.julianDay(2007, 3, 3, 15.5);
+                    const date = swe.julianDayToDate(jd1);
+                    const jd2 = swe.julianDay(date.year, date.month, date.day, date.hour);
+                    expect(jd2).toBeCloseTo(jd1, 6);
+                });
+            });
+
+            // Planetary Position Calculations (from calc_ut.test.ts)
+            runner.describe('calculatePosition (Moshier ephemeris)', () => {
+                runner.test('should calculate Sun position and return object', () => {
+                    const flags = CalculationFlag.MoshierEphemeris | CalculationFlag.Speed;
+                    const sun = swe.calculatePosition(2452275.5, Planet.Sun, flags);
+
+                    // Check object structure
+                    expect(sun).toHaveProperty('longitude');
+                    expect(sun).toHaveProperty('latitude');
+                    expect(sun).toHaveProperty('distance');
+                    expect(sun).toHaveProperty('longitudeSpeed');
+                    expect(sun).toHaveProperty('latitudeSpeed');
+                    expect(sun).toHaveProperty('distanceSpeed');
+                    expect(sun).toHaveProperty('flags');
+
+                    // Test position values (Moshier has slightly different precision than Swiss Ephemeris)
+                    expect(sun.longitude).toBeCloseTo(280.38, 1);
+                    expect(sun.latitude).toBeCloseTo(0.0, 3);
+                    expect(sun.distance).toBeCloseTo(0.983, 2);
+                });
+
+                runner.test('should work with enum values for planets', () => {
+                    const mercury = swe.calculatePosition(2452275.5, Planet.Mercury, CalculationFlag.MoshierEphemeris);
+                    expect(mercury.longitude).toBeGreaterThanOrEqual(0);
+                    expect(mercury.longitude).toBeLessThan(360);
+                });
+
+                runner.test('should calculate Moon position', () => {
+                    const moon = swe.calculatePosition(2452275.5, Planet.Moon, CalculationFlag.MoshierEphemeris);
+                    expect(moon.longitude).toBeGreaterThanOrEqual(0);
+                    expect(moon.longitude).toBeLessThan(360);
+                    expect(moon.latitude).toBeGreaterThan(-6);
+                    expect(moon.latitude).toBeLessThan(6);
+                });
+
+                runner.test('should calculate Mars position', () => {
+                    const mars = swe.calculatePosition(2452275.5, Planet.Mars, CalculationFlag.MoshierEphemeris | CalculationFlag.Speed);
+                    expect(mars.longitude).toBeGreaterThanOrEqual(0);
+                    expect(mars.longitude).toBeLessThan(360);
+                    expect(mars.longitudeSpeed).toBeTruthy();
+                });
+            });
+
+            // House Calculations (from integration.test.ts)
+            runner.describe('calculateHouses', () => {
+                runner.test('should calculate houses with Placidus system', () => {
+                    const jd = swe.julianDay(2007, 3, 3, 12);
+                    const houses = swe.calculateHouses(jd, 40.7128, -74.0060, HouseSystem.Placidus);
+
+                    expect(houses).toHaveProperty('cusps');
+                    expect(houses).toHaveProperty('ascendant');
+                    expect(houses).toHaveProperty('mc');
+                    expect(houses.houseSystem).toBe(HouseSystem.Placidus);
+
+                    // Cusps should be an array
+                    expect(houses.cusps.length).toBe(13);
+
+                    // All cusps should be valid degrees (0-360)
+                    for (let i = 1; i < 13; i++) {
+                        expect(houses.cusps[i]).toBeGreaterThanOrEqual(0);
+                        expect(houses.cusps[i]).toBeLessThan(360);
+                    }
+
+                    // Ascendant and MC should be valid
+                    expect(houses.ascendant).toBeGreaterThanOrEqual(0);
+                    expect(houses.ascendant).toBeLessThan(360);
+                    expect(houses.mc).toBeGreaterThanOrEqual(0);
+                    expect(houses.mc).toBeLessThan(360);
+                });
+            });
+
+            // Run all tests
+            await runner.run();
+
+        } catch (error) {
+            document.getElementById('status').className = 'error';
+            document.getElementById('status').textContent = `✗ Error: ${error.message}`;
+            console.error(error);
+        }
+    </script>
+</body>
+</html>

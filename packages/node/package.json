@@ -21,7 +21,7 @@
     "README.md"
   ],
   "scripts": {
-    "install": "node-gyp rebuild",
+    "install": "npm run copy:libswe && node-gyp rebuild",
     "copy:libswe": "mkdir -p libswe && cp ../../native/libswe/* libswe/",
     "prebuild": "npm run copy:libswe",
     "build": "node-gyp rebuild && tsc",

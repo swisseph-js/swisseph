@@ -135,13 +135,21 @@ export class SwissEphemeris {
 
     // Configure the WASM module to locate files correctly
     // Default to 'swisseph.wasm' (same directory as JS) unless custom path provided
-    const resolvedWasmPath = wasmPath || 'swisseph.wasm';
+    let resolvedWasmPath = wasmPath;
+    if (!resolvedWasmPath) {
+      try {
+        // @ts-ignore - Valid in browser environments
+        resolvedWasmPath = new URL('./swisseph.wasm', import.meta.url).href;
+      } catch (e) {
+        resolvedWasmPath = 'swisseph.wasm';
+      }
+    }
 
     this.module = (await SwissEphModuleFactory({
       locateFile: (path: string, prefix?: string) => {
         // If this is the WASM file, use the custom path provided by the user
         if (path === 'swisseph.wasm') {
-          return resolvedWasmPath;
+          return resolvedWasmPath!;
         }
         // For other files, use the prefix if provided, otherwise use the path as-is
         return prefix ? prefix + path : path;

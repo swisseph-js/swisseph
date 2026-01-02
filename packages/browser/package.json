@@ -12,6 +12,7 @@
       "import": "./dist/swisseph-browser.js",
       "default": "./dist/swisseph-browser.js"
     },
+    "./dist/swisseph.wasm": "./dist/swisseph.wasm",
     "./types/*": "./dist/types/*"
   },
   "files": [

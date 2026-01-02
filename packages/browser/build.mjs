@@ -49,7 +49,7 @@ await esbuild.build({
   platform: 'browser',
   target: 'es2020',
   outfile: 'dist/swisseph-browser.js',
-  external: ['./swisseph.js'], // Don't bundle the WASM loader
+  external: ['./swisseph.js', './swisseph.wasm'], // Don't bundle the WASM loader or WASM file
   sourcemap: true,
   minify: false,
   keepNames: true,

@@ -57,8 +57,9 @@
         import { SwissEphemeris, Planet, HouseSystem, CalendarType } from '../dist/swisseph-browser.js';
 
         // Initialize the Swiss Ephemeris
+        // WASM file is in dist/, example file is in examples/
         const swe = new SwissEphemeris();
-        await swe.init();
+        await swe.init('../dist/swisseph.wasm');
 
         const output = document.getElementById('output');
         output.innerHTML = '<strong>Swiss Ephemeris initialized successfully!</strong><br>Click a button above to calculate positions.';

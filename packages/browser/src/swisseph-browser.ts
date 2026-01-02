@@ -100,14 +100,16 @@ export class SwissEphemeris {
    * Initialize the WebAssembly module
    *
    * This must be called before using any other methods.
-   * It loads the WASM binary and sets up the function wrappers.
+   * The WASM file is automatically loaded from the same directory as the JS bundle.
+   *
+   * @param wasmPath - Optional custom path to swisseph.wasm file (for advanced use cases)
    *
    * @example
    * const swe = new SwissEphemeris();
    * await swe.init();
    * console.log(swe.version());
    */
-  async init(): Promise<void> {
+  async init(wasmPath?: string): Promise<void> {
     if (this.ready) return;
 
     // Dynamically import the WASM module (built separately by build-wasm.sh)
@@ -126,21 +128,20 @@ export class SwissEphemeris {
       // Fallback: try to get the function from the module
       SwissEphModuleFactory = (SwissEphModuleImport as any).SwissEphModule || SwissEphModuleImport;
     }
-    
+
     if (typeof SwissEphModuleFactory !== 'function') {
       throw new Error('Failed to load WASM module: SwissEphModule factory function not found');
     }
-    
+
     // Configure the WASM module to locate files correctly
-    // The WASM file is in the same directory as swisseph.js (dist/)
-    // When imported as ES module, currentScript might not be available,
-    // so we provide locateFile to ensure correct path resolution
+    // Default to 'swisseph.wasm' (same directory as JS) unless custom path provided
+    const resolvedWasmPath = wasmPath || 'swisseph.wasm';
+
     this.module = (await SwissEphModuleFactory({
       locateFile: (path: string, prefix?: string) => {
-        // The WASM file should be in the same directory as swisseph.js (dist/)
-        // Use absolute path from server root to avoid path resolution issues
+        // If this is the WASM file, use the custom path provided by the user
         if (path === 'swisseph.wasm') {
-          return '/dist/swisseph.wasm';
+          return resolvedWasmPath;
         }
         // For other files, use the prefix if provided, otherwise use the path as-is
         return prefix ? prefix + path : path;

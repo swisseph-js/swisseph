@@ -231,7 +231,8 @@
         let swissEphemerisLoaded = false;
 
         try {
-            await swe.init();
+            // WASM file is in dist/, test file is in test/
+            await swe.init('../dist/swisseph.wasm');
             document.getElementById('status').className = 'ready';
             document.getElementById('status').textContent = `✓ Swiss Ephemeris WASM initialized: ${swe.version()}`;
 

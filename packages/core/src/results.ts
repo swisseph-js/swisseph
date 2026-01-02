@@ -6,7 +6,7 @@
  * structured objects for better developer experience.
  */
 
-import { EclipseType, HouseSystem, CalendarType } from './enums';
+import { EclipseType, HouseSystem, CalendarType } from './enums.js';
 
 /**
  * Planetary position result from calculatePosition()

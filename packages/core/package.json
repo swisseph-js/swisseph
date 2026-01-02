@@ -1,6 +1,6 @@
 {
   "name": "@swisseph/core",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "TypeScript types and interfaces for Swiss Ephemeris",
   "type": "module",
   "main": "dist/index.cjs",

@@ -5,7 +5,7 @@
  * These builder classes make it easier to combine flags while maintaining type safety.
  */
 
-import { CalculationFlag, EclipseType } from './enums';
+import { CalculationFlag, EclipseType } from './enums.js';
 
 /**
  * Type-safe flag builder for calculation flags

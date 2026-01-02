@@ -5,8 +5,8 @@
  * to the result interfaces, making the library more developer-friendly.
  */
 
-import { EclipseType, CalendarType } from './enums';
-import { LunarEclipse, SolarEclipse, ExtendedDateTime } from './results';
+import { EclipseType, CalendarType } from './enums.js';
+import { LunarEclipse, SolarEclipse, ExtendedDateTime } from './results.js';
 
 /**
  * Implementation of LunarEclipse with convenience methods

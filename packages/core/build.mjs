@@ -36,7 +36,7 @@ console.log('Build complete: dist/index.js (ESM) and dist/index.cjs (CJS)');
 // Generate types
 console.log('Generating types...');
 try {
-  execSync('tsc --emitDeclarationOnly --declaration --outDir dist', { stdio: 'inherit' });
+  execSync('npx tsc -p tsconfig.json --emitDeclarationOnly', { stdio: 'inherit' });
   console.log('Types generated.');
 } catch (e) {
   console.error('Failed to generate types:', e);

@@ -62,8 +62,8 @@ importers:
   packages/node:
     dependencies:
       '@swisseph/core':
-        specifier: ^1.0.1
-        version: 1.0.1
+        specifier: ^1.0.3
+        version: 1.0.3
       node-addon-api:
         specifier: ^7.1.0
         version: 7.1.1
@@ -537,6 +537,9 @@ packages:
 
   '@swisseph/core@1.0.1':
     resolution: {integrity: sha512-5Wciww5Jnh+K2GGqWEldo7T0pMTnMMdhgtgB5nL01YlIJDmRve9hGvf9hDRtuV9adeIbKI5iSz6nvJe159iuEQ==}
+
+  '@swisseph/core@1.0.3':
+    resolution: {integrity: sha512-1XsLox4IAe8GrBauNUBKLEcxBCY/R/tJv+r0Cm6NO84TDbFei0FiYmYxasc82UubqRbhZt5BAygUB2NQF4Rx/Q==}
 
   '@tsconfig/node10@1.0.12':
     resolution: {integrity: sha512-UCYBaeFvM11aU2y3YPZ//O5Rhj+xKyzy7mvcIoAjASbigy8mHMryP5cK7dgjlz2hWxh1g5pLw084E0a/wlUSFQ==}
@@ -2376,6 +2379,8 @@ snapshots:
       '@sinonjs/commons': 3.0.1
 
   '@swisseph/core@1.0.1': {}
+
+  '@swisseph/core@1.0.3': {}
 
   '@tsconfig/node10@1.0.12': {}
 

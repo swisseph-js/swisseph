@@ -20,8 +20,7 @@ export {
   CommonEclipseTypes,
   AsteroidOffset,
   PlanetaryMoonOffset,
-  NumberOfPlanets,
-} from './enums';
+} from './enums.js';
 
 // Export type aliases from enums
 export type { CelestialBody } from './enums';
@@ -35,18 +34,17 @@ export type {
   HouseData,
   LunarEclipse,
   SolarEclipse,
-} from './results';
+} from './results.js';
 
 // Export implementation classes
-export { LunarEclipseImpl, SolarEclipseImpl, DateTimeImpl } from './implementations';
+export { LunarEclipseImpl, SolarEclipseImpl, DateTimeImpl } from './implementations.js';
 
 // Export flag utilities
 export {
   CalculationFlags,
   EclipseTypeFlags,
   normalizeFlags,
-  normalizeEclipseTypes,
-} from './flags';
+} from './flags.js';
 
 // Export flag input types
 export type { CalculationFlagInput, EclipseTypeFlagInput } from './flags';

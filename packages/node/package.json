@@ -18,6 +18,7 @@
     "binding.gyp",
     "ephemeris",
     "libswe",
+    "scripts",
     "README.md"
   ],
   "scripts": {

@@ -52,7 +52,7 @@
     "url": "https://github.com/swisseph-js/swisseph/issues"
   },
   "dependencies": {
-    "@swisseph/core": "^1.0.1"
+    "@swisseph/core": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.27.2",

@@ -20,10 +20,11 @@ export {
   CommonEclipseTypes,
   AsteroidOffset,
   PlanetaryMoonOffset,
+  NumberOfPlanets,
 } from './enums.js';
 
 // Export type aliases from enums
-export type { CelestialBody } from './enums';
+export type { CelestialBody } from './enums.js';
 
 // Export all result interfaces
 export type {
@@ -44,7 +45,8 @@ export {
   CalculationFlags,
   EclipseTypeFlags,
   normalizeFlags,
+  normalizeEclipseTypes,
 } from './flags.js';
 
 // Export flag input types
-export type { CalculationFlagInput, EclipseTypeFlagInput } from './flags';
+export type { CalculationFlagInput, EclipseTypeFlagInput } from './flags.js';

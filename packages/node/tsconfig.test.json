@@ -7,5 +7,5 @@
       "@swisseph/node": ["./src"]
     }
   },
-  "include": ["tests/**/*", "src/**/*"]
+  "include": ["tests/**/*", "src/**/*", "examples/**/*"]
 }

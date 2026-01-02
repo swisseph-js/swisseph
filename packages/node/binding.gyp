@@ -4,19 +4,19 @@
       "target_name": "swisseph",
       "sources": [
         "binding/swisseph_binding.cc",
-        "../../native/libswe/sweph.c",
-        "../../native/libswe/swephlib.c",
-        "../../native/libswe/swedate.c",
-        "../../native/libswe/swejpl.c",
-        "../../native/libswe/swemmoon.c",
-        "../../native/libswe/swemplan.c",
-        "../../native/libswe/swehouse.c",
-        "../../native/libswe/swecl.c",
-        "../../native/libswe/swehel.c"
+        "libswe/sweph.c",
+        "libswe/swephlib.c",
+        "libswe/swedate.c",
+        "libswe/swejpl.c",
+        "libswe/swemmoon.c",
+        "libswe/swemplan.c",
+        "libswe/swehouse.c",
+        "libswe/swecl.c",
+        "libswe/swehel.c"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
-        "../../native/libswe",
+        "libswe",
         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1"
       ],
       "dependencies": [

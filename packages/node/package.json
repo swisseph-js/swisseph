@@ -1,6 +1,6 @@
 {
   "name": "@swisseph/node",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Swiss Ephemeris for Node.js - high precision astronomical calculations with native bindings",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,17 +17,21 @@
     "binding",
     "binding.gyp",
     "ephemeris",
+    "libswe",
     "README.md"
   ],
   "scripts": {
     "install": "node-gyp rebuild",
+    "copy:libswe": "mkdir -p libswe && cp ../../native/libswe/* libswe/",
+    "prebuild": "npm run copy:libswe",
     "build": "node-gyp rebuild && tsc",
+    "prepack": "npm run copy:libswe",
     "build:native": "node-gyp rebuild",
     "build:js": "tsc",
     "test": "jest",
-    "example": "npm run build && ts-node examples/basic-usage.ts",
-    "example:chart": "npm run build && ts-node examples/birth-chart.ts",
-    "example:moshier": "npm run build && ts-node examples/moshier-ephemeris.ts",
+    "example": "npm run build && ts-node -P tsconfig.test.json examples/basic-usage.ts",
+    "example:chart": "npm run build && ts-node -P tsconfig.test.json examples/birth-chart.ts",
+    "example:moshier": "npm run build && ts-node -P tsconfig.test.json examples/moshier-ephemeris.ts",
     "clean": "rm -rf dist build"
   },
   "keywords": [
@@ -57,7 +61,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@swisseph/core": "^1.0.3",
+    "@swisseph/core": "workspace:*",
     "node-addon-api": "^7.1.0"
   },
   "devDependencies": {

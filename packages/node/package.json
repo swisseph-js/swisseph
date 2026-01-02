@@ -57,7 +57,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@swisseph/core": "^1.0.1",
+    "@swisseph/core": "^1.0.3",
     "node-addon-api": "^7.1.0"
   },
   "devDependencies": {

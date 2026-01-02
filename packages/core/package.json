@@ -1,14 +1,16 @@
 {
   "name": "@swisseph/core",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "TypeScript types and interfaces for Swiss Ephemeris",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     }
   },
@@ -17,7 +19,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "node build.mjs",
     "clean": "rm -rf dist tsconfig.tsbuildinfo",
     "prepublishOnly": "npm run build"
   },
@@ -43,6 +45,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "esbuild": "^0.27.2",
     "typescript": "^5.3.3"
   }
 }

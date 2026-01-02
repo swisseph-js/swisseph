@@ -67,6 +67,16 @@ const houses: HouseSystem = HouseSystem.Placidus;
 const flags: CalculationFlagInput = CalculationFlag.SwissEphemeris | CalculationFlag.Speed;
 ```
 
+## Documentation
+
+Complete documentation is available in the [GitHub repository](https://github.com/swisseph-js/swisseph/tree/main/docs):
+
+- **[Getting Started Guide](https://github.com/swisseph-js/swisseph/blob/main/docs/getting-started.md)** - Installation and quick start
+- **[Type Reference](https://github.com/swisseph-js/swisseph/blob/main/docs/api/core.md)** - Complete types and enums documentation
+- **API References:**
+  - [`@swisseph/node` API](https://github.com/swisseph-js/swisseph/blob/main/docs/api/node.md) - Node.js package documentation
+  - [`@swisseph/browser` API](https://github.com/swisseph-js/swisseph/blob/main/docs/api/browser.md) - Browser package documentation
+
 ## License
 
 AGPL-3.0 - See LICENSE file for details

@@ -53,6 +53,22 @@ This monorepo contains three npm packages:
 
 **Both packages share identical TypeScript APIs!**
 
+## 📚 Documentation
+
+Complete documentation is available in the [`/docs`](./docs) directory:
+
+- **[Getting Started Guide](./docs/getting-started.md)** - Installation, quick start, and core concepts
+- **API References:**
+  - [`@swisseph/node` API](./docs/api/node.md) - Complete Node.js API reference
+  - [`@swisseph/browser` API](./docs/api/browser.md) - Complete browser API reference
+  - [`@swisseph/core` Types](./docs/api/core.md) - TypeScript types and enums
+- **Usage Guides:**
+  - [Birth Charts](./docs/guides/birth-charts.md) - Calculate complete birth charts
+  - [Eclipse Calculations](./docs/guides/eclipses.md) - Find and analyze eclipses
+  - [House Systems](./docs/guides/house-systems.md) - Understanding house systems
+  - [Julian Days](./docs/guides/julian-days.md) - Working with Julian Day numbers
+  - [Ephemeris Files](./docs/guides/ephemeris-files.md) - Understanding ephemeris files
+
 ## Quick Start
 
 ### Node.js

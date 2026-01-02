@@ -58,8 +58,10 @@ const sun = swe.calculatePosition(jd, Planet.Sun, CalculationFlag.SwissEphemeris
 
 ```typescript
 const swe = new SwissEphemeris();
-await swe.init(); // Required before use
+await swe.init();
 ```
+
+The WASM file is automatically loaded from the same directory as the JavaScript bundle. This works out-of-the-box with all modern bundlers (Vite, Webpack, Rollup, etc.).
 
 ### Date & Time
 
@@ -251,6 +253,20 @@ else if (Math.abs(aspect - 180) < 10) console.log('Opposition');
 
 swe.close();
 ```
+
+## Documentation
+
+Complete documentation is available in the [GitHub repository](https://github.com/swisseph-js/swisseph/tree/main/docs):
+
+- **[Getting Started Guide](https://github.com/swisseph-js/swisseph/blob/main/docs/getting-started.md)** - Installation and quick start
+- **[API Reference](https://github.com/swisseph-js/swisseph/blob/main/docs/api/browser.md)** - Complete browser API documentation
+- **[Shared Types](https://github.com/swisseph-js/swisseph/blob/main/docs/api/core.md)** - TypeScript types and enums reference
+- **Usage Guides:**
+  - [Birth Charts](https://github.com/swisseph-js/swisseph/blob/main/docs/guides/birth-charts.md) - Calculate complete birth charts
+  - [Eclipse Calculations](https://github.com/swisseph-js/swisseph/blob/main/docs/guides/eclipses.md) - Find and analyze eclipses
+  - [House Systems](https://github.com/swisseph-js/swisseph/blob/main/docs/guides/house-systems.md) - Understanding house systems
+  - [Julian Days](https://github.com/swisseph-js/swisseph/blob/main/docs/guides/julian-days.md) - Working with Julian Day numbers
+  - [Ephemeris Files](https://github.com/swisseph-js/swisseph/blob/main/docs/guides/ephemeris-files.md) - Understanding ephemeris files
 
 ## Browser Compatibility
 

@@ -31,7 +31,7 @@ import {
 import * as path from 'path';
 
 // Import the native addon
-const binding = require('../build/Release/swisseph.node');
+const binding = require('node-gyp-build')(path.join(__dirname, '..'));
 
 // Track if ephemeris path has been explicitly set
 let ephemerisPathSet = false;

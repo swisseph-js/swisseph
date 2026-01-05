@@ -2,6 +2,7 @@
 dist/
 build/
 libswe/
+prebuilds/
 
 # Test coverage
 coverage/

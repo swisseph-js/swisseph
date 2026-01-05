@@ -24,68 +24,15 @@ on:
       - '**'
 
 jobs:
-  publish:
+  setup:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
+    outputs:
+      packages: ${{ steps.determine.outputs.packages }}
+      publish_core: ${{ steps.determine.outputs.publish_core }}
+      publish_node: ${{ steps.determine.outputs.publish_node }}
+      publish_browser: ${{ steps.determine.outputs.publish_browser }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.27.0
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # Verify npm authentication
-      - name: Verify npm authentication
-        run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "Error: NPM_TOKEN secret is not set!"
-            echo "Please add NPM_TOKEN to your repository secrets."
-            exit 1
-          fi
-          npm whoami || (echo "Failed to authenticate with npm" && exit 1)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # Setup Emscripten for browser package
-      - name: Setup Emscripten
-        if: |
-          (github.event_name == 'workflow_dispatch' && (inputs.package == 'browser' || inputs.package == 'all')) ||
-          (github.event_name == 'release' || github.event_name == 'push')
-        uses: mymindstorm/setup-emsdk@v12
-        with:
-          version: 'latest'
-
-      # Determine which packages to publish
-      - name: Determine packages to publish
-        id: packages
+      - id: determine
         shell: bash
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
@@ -94,6 +41,8 @@ jobs:
             # For releases/tags, publish all packages
             PACKAGE="all"
           fi
+          
+          echo "Selected package scope: $PACKAGE"
           
           if [ "$PACKAGE" == "all" ]; then
             echo "packages=core,node,browser" >> $GITHUB_OUTPUT
@@ -117,47 +66,125 @@ jobs:
             echo "publish_browser=true" >> $GITHUB_OUTPUT
           fi
 
-      # Bump versions if specified
+  prebuild_node:
+    needs: setup
+    if: needs.setup.outputs.publish_node == 'true'
+    name: Prebuild Node on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prebuilds
+        run: pnpm --filter @swisseph/node run prebuild
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuilds-${{ matrix.os }}
+          path: packages/node/prebuilds
+          retention-days: 1
+
+  publish:
+    needs: [setup, prebuild_node]
+    # Run if setup succeeded, and prebuild_node either succeeded or was skipped (because not publishing node)
+    if: |
+      always() && 
+      needs.setup.result == 'success' && 
+      (needs.prebuild_node.result == 'success' || needs.prebuild_node.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify npm authentication
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "Error: NPM_TOKEN secret is not set!"
+            echo "Please add NPM_TOKEN to your repository secrets."
+            exit 1
+          fi
+          npm whoami || (echo "Failed to authenticate with npm" && exit 1)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Setup Emscripten
+        if: needs.setup.outputs.publish_browser == 'true'
+        uses: mymindstorm/setup-emsdk@v12
+        with:
+          version: 'latest'
+
+      # Download and merge prebuilds if we are publishing node
+      - name: Download Node.js prebuilds
+        if: needs.setup.outputs.publish_node == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: prebuilds-*
+          path: packages/node/prebuilds
+          merge-multiple: true
+
       - name: Bump versions
-        if: |
-          github.event_name == 'workflow_dispatch' && inputs.version != ''
+        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
         shell: bash
         run: |
           VERSION="${{ inputs.version }}"
           
-          if [ "${{ steps.packages.outputs.publish_core }}" == "true" ]; then
+          if [ "${{ needs.setup.outputs.publish_core }}" == "true" ]; then
             cd packages/core
-            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              pnpm version "$VERSION" --no-git-tag-version
-            else
-              pnpm version "$VERSION" --no-git-tag-version
-            fi
+            pnpm version "$VERSION" --no-git-tag-version
             cd ../..
           fi
           
-          if [ "${{ steps.packages.outputs.publish_node }}" == "true" ]; then
+          if [ "${{ needs.setup.outputs.publish_node }}" == "true" ]; then
             cd packages/node
-            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              pnpm version "$VERSION" --no-git-tag-version
-            else
-              pnpm version "$VERSION" --no-git-tag-version
-            fi
+            pnpm version "$VERSION" --no-git-tag-version
             cd ../..
           fi
           
-          if [ "${{ steps.packages.outputs.publish_browser }}" == "true" ]; then
+          if [ "${{ needs.setup.outputs.publish_browser }}" == "true" ]; then
             cd packages/browser
-            if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              pnpm version "$VERSION" --no-git-tag-version
-            else
-              pnpm version "$VERSION" --no-git-tag-version
-            fi
+            pnpm version "$VERSION" --no-git-tag-version
             cd ../..
           fi
 
-      # Build and publish @swisseph/core (must be first)
       - name: Build and publish @swisseph/core
-        if: steps.packages.outputs.publish_core == 'true'
+        if: needs.setup.outputs.publish_core == 'true'
         run: |
           echo "Building @swisseph/core..."
           pnpm --filter @swisseph/core build
@@ -167,21 +194,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Build and publish @swisseph/node
       - name: Build and publish @swisseph/node
-        if: steps.packages.outputs.publish_node == 'true'
+        if: needs.setup.outputs.publish_node == 'true'
         run: |
-          echo "Building @swisseph/node..."
-          pnpm --filter @swisseph/node build
+          echo "Building @swisseph/node (JS only)..."
+          # Use build:js to avoid rebuilding native addon locally, since we have prebuilds
+          pnpm --filter @swisseph/node run build:js
           
           echo "Publishing @swisseph/node..."
           pnpm --filter @swisseph/node publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Build and publish @swisseph/browser
       - name: Build and publish @swisseph/browser
-        if: steps.packages.outputs.publish_browser == 'true'
+        if: needs.setup.outputs.publish_browser == 'true'
         run: |
           echo "Building @swisseph/browser..."
           pnpm --filter @swisseph/browser run build:all
@@ -191,20 +217,18 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Summary
       - name: Publish summary
         if: always()
         run: |
           echo "## Publishing Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Published packages:" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.packages.outputs.publish_core }}" == "true" ]; then
+          if [ "${{ needs.setup.outputs.publish_core }}" == "true" ]; then
             echo "- ✅ @swisseph/core" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ "${{ steps.packages.outputs.publish_node }}" == "true" ]; then
+          if [ "${{ needs.setup.outputs.publish_node }}" == "true" ]; then
             echo "- ✅ @swisseph/node" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ "${{ steps.packages.outputs.publish_browser }}" == "true" ]; then
+          if [ "${{ needs.setup.outputs.publish_browser }}" == "true" ]; then
             echo "- ✅ @swisseph/browser" >> $GITHUB_STEP_SUMMARY
           fi
-

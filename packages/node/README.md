@@ -6,14 +6,21 @@ High precision astronomical calculations for Node.js using native bindings to th
 
 ```bash
 npm install @swisseph/node
+# or
+pnpm add @swisseph/node
+# or
+bun add @swisseph/node
 ```
 
 **Requirements:**
-- Node.js 14.0.0 or higher
-- C++ build tools for native compilation
+- Node.js 14.0.0 or higher (or Bun)
+
+**Prebuilt binaries are included** for common platforms (macOS, Linux, Windows). No C++ compiler needed for most users.
 
 <details>
-<summary>Installing build tools</summary>
+<summary>Building from source (optional)</summary>
+
+If prebuilt binaries aren't available for your platform, the package will automatically build from source. You'll need C++ build tools:
 
 **macOS:**
 ```bash
@@ -253,15 +260,20 @@ Complete documentation is available in the [GitHub repository](https://github.co
 
 ## Troubleshooting
 
+**"Module did not self-register" or platform errors**
+- The package includes prebuilt binaries for common platforms
+- If your platform isn't supported, the package will try to build from source
+- Install C++ build tools if needed (see "Building from source" above)
+- Try rebuilding: `npm rebuild @swisseph/node`
+
 **Build fails with "node-gyp rebuild failed"**
-- Install C++ build tools (see installation section above)
+- Install C++ build tools (see "Building from source" section above)
+- On macOS: ensure Xcode Command Line Tools are installed
+- On Windows: ensure Visual Studio Build Tools are installed
 
 **"Cannot find ephemeris files"**
 - Files are bundled with the package. Check `node_modules/@swisseph/node/ephemeris/` exists
 - If using custom files, verify path in `setEphemerisPath()`
-
-**"Module did not self-register"**
-- Rebuild for your Node.js version: `npm rebuild @swisseph/node`
 
 ## License
 

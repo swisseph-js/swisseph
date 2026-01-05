@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <napi.h>
 #include "swephexp.h"
 #include <cstring>

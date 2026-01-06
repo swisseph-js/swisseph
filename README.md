@@ -241,54 +241,6 @@ pnpm --filter @swisseph/core build
 pnpm test
 ```
 
-### Repository Structure
-
-```
-swisseph/
-├── packages/
-│   ├── core/              # Shared TypeScript types
-│   ├── node/              # Node.js native addon
-│   │   ├── tests/         # Package tests
-│   │   ├── examples/      # Usage examples
-│   │   └── ephemeris/     # Bundled data files
-│   └── browser/           # WebAssembly browser version
-│       ├── test/          # Browser tests
-│       └── examples/      # Usage examples
-├── native/                # Shared C source (Swiss Ephemeris library)
-└── docs/                  # Documentation
-```
-
-## Testing
-
-### Node.js Tests
-
-```bash
-cd packages/node
-npm test
-```
-
-Tests verify calculations match pyswisseph output.
-
-### Browser Tests
-
-```bash
-cd packages/browser
-npm run dev
-```
-
-Open http://localhost:8000/test/calculations.html in your browser.
-
-## Comparison with Other Libraries
-
-| Feature | This Library | pyswisseph | swisseph (C) |
-|---------|-------------|------------|--------------|
-| Language | TypeScript/JavaScript | Python | C |
-| API Style | Modern (objects, enums) | Traditional (tuples) | Traditional (arrays) |
-| Platform | Node.js + Browser | Python only | Any with C bindings |
-| TypeScript | Native support | Type stubs | No |
-| Return Types | Named objects | Tuples | Arrays |
-| Bundle Size | ~250KB (browser) | N/A | N/A |
-
 ## License
 
 AGPL-3.0 - Same as Swiss Ephemeris and pyswisseph

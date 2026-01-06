@@ -322,6 +322,47 @@ export class SwissEphemeris {
   }
 
   /**
+   * Calculate Julian day number from a JavaScript Date object
+   *
+   * Convenience function that converts a JavaScript Date to Julian day number.
+   * The Date is interpreted as UTC.
+   *
+   * @param date - JavaScript Date object (interpreted as UTC)
+   * @param calendarType - Calendar system (default: Gregorian)
+   * @returns Julian day number
+   *
+   * @example
+   * // From Date object
+   * const date = new Date('1990-05-15T14:30:00Z');
+   * const jd = swe.dateToJulianDay(date);
+   *
+   * // From timestamp
+   * const now = new Date();
+   * const jdNow = swe.dateToJulianDay(now);
+   *
+   * // Equivalent to swe.julianDay(1990, 5, 15, 14.5)
+   * const jd2 = swe.dateToJulianDay(new Date(Date.UTC(1990, 4, 15, 14, 30)));
+   */
+  dateToJulianDay(
+    date: Date,
+    calendarType: CalendarType = CalendarType.Gregorian
+  ): number {
+    this._checkReady();
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1; // JavaScript months are 0-indexed
+    const day = date.getUTCDate();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    const seconds = date.getUTCSeconds();
+    const milliseconds = date.getUTCMilliseconds();
+
+    // Convert to decimal hours
+    const decimalHours = hours + minutes / 60 + seconds / 3600 + milliseconds / 3600000;
+
+    return this.julianDay(year, month, day, decimalHours, calendarType);
+  }
+
+  /**
    * Convert Julian day number to calendar date
    *
    * @param jd - Julian day number

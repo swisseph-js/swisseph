@@ -81,7 +81,7 @@ npm install @swisseph/browser
 
 ```typescript
 import {
-  julianDay,
+  dateToJulianDay,
   calculatePosition,
   calculateHouses,
   Planet,
@@ -90,8 +90,9 @@ import {
 
 // No setup required! Ephemeris files bundled and auto-loaded
 
-// Calculate Julian day
-const jd = julianDay(2007, 3, 3);
+// Calculate Julian day using Date object
+const date = new Date('2007-03-03T00:00:00Z');
+const jd = dateToJulianDay(date);
 console.log('Julian day:', jd); // 2454162.5
 
 // Calculate planetary position
@@ -117,7 +118,8 @@ const swe = new SwissEphemeris();
 await swe.init();
 
 // Same API as Node.js!
-const jd = swe.julianDay(2007, 3, 3);
+const date = new Date('2007-03-03T00:00:00Z');
+const jd = swe.dateToJulianDay(date);
 
 // Calculate planetary position
 const sun = swe.calculatePosition(jd, Planet.Sun);
@@ -150,8 +152,11 @@ const sun = swe.calculatePosition(jd, Planet.Sun, CalculationFlag.SwissEphemeris
 Swiss Ephemeris uses Julian Day numbers for all calculations. A Julian Day is a continuous count of days since January 1, 4713 BCE.
 
 ```typescript
-// Convert calendar date to Julian day
-const jd = julianDay(2007, 3, 3, 12.5); // March 3, 2007, 12:30 UTC
+// Convert JavaScript Date to Julian day (recommended)
+const jd = dateToJulianDay(new Date('2007-03-03T12:30:00Z'));
+
+// Or convert calendar date components to Julian day
+const jd2 = julianDay(2007, 3, 3, 12.5); // Same result
 
 // Convert Julian day back to calendar date
 const date = julianDayToDate(jd);

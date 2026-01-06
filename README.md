@@ -162,9 +162,10 @@ See [@swisseph/browser documentation](packages/browser/) for complete API refere
 ### Birth Chart Calculation
 
 ```typescript
-import { julianDay, calculatePosition, Planet } from '@swisseph/node';
+import { dateToJulianDay, calculatePosition, Planet } from '@swisseph/node';
 
-const jd = julianDay(1990, 5, 15, 14.5); // May 15, 1990, 14:30 UTC
+const date = new Date('1990-05-15T14:30:00Z');
+const jd = dateToJulianDay(date);
 
 const planets = [
   Planet.Sun, Planet.Moon, Planet.Mercury, Planet.Venus,

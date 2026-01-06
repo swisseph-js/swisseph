@@ -28,8 +28,9 @@ import { SwissEphemeris, Planet, HouseSystem } from '@swisseph/browser';
 const swe = new SwissEphemeris();
 await swe.init();
 
-// Calculate planetary position
-const jd = swe.julianDay(2007, 3, 3);
+// Calculate planetary position using Date object
+const date = new Date('2007-03-03T00:00:00Z');
+const jd = swe.dateToJulianDay(date);
 const sun = swe.calculatePosition(jd, Planet.Sun);
 console.log(`Sun: ${sun.longitude}°`);
 
@@ -66,8 +67,26 @@ The WASM file is automatically loaded from the same directory as the JavaScript 
 ### Date & Time
 
 ```typescript
+// Convert JavaScript Date to Julian day (recommended)
+swe.dateToJulianDay(date, calendarType?)
+
+// Convert date components to Julian day
 swe.julianDay(year, month, day, hour?, calendarType?)
+
+// Convert Julian day back to date
 swe.julianDayToDate(jd, calendarType?)
+```
+
+**Examples:**
+```typescript
+// Using Date object (easiest)
+const jd = swe.dateToJulianDay(new Date('1990-05-15T14:30:00Z'));
+
+// Using date components
+const jd2 = swe.julianDay(1990, 5, 15, 14.5);  // Same result
+
+// Current time
+const now = swe.dateToJulianDay(new Date());
 ```
 
 ### Planetary Positions
@@ -165,7 +184,8 @@ const swe = new SwissEphemeris();
 await swe.init();
 
 // Birth: May 15, 1990, 14:30 UTC, New York
-const jd = swe.julianDay(1990, 5, 15, 14.5);
+const birthDate = new Date('1990-05-15T14:30:00Z');
+const jd = swe.dateToJulianDay(birthDate);
 
 // Calculate all planet positions
 const planets = [
@@ -232,7 +252,8 @@ import { SwissEphemeris, Planet } from '@swisseph/browser';
 const swe = new SwissEphemeris();
 await swe.init();
 
-const jd = swe.julianDay(2025, 6, 15);
+// Calculate for current time
+const jd = swe.dateToJulianDay(new Date());
 
 // Calculate positions
 const sun = swe.calculatePosition(jd, Planet.Sun);

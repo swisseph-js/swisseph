@@ -42,7 +42,7 @@ npm install --global windows-build-tools
 
 ```typescript
 import {
-  julianDay,
+  dateToJulianDay,
   calculatePosition,
   calculateHouses,
   Planet,
@@ -51,8 +51,9 @@ import {
 
 // No setup required! Ephemeris files are bundled and auto-loaded.
 
-// Calculate planetary position
-const jd = julianDay(2007, 3, 3);
+// Calculate planetary position using Date object
+const date = new Date('2007-03-03T00:00:00Z');
+const jd = dateToJulianDay(date);
 const sun = calculatePosition(jd, Planet.Sun);
 console.log(`Sun: ${sun.longitude}°`);
 
@@ -67,8 +68,26 @@ console.log(`MC: ${houses.mc}°`);
 ### Date & Time
 
 ```typescript
+// Convert JavaScript Date to Julian day (recommended)
+dateToJulianDay(date, calendarType?)
+
+// Convert date components to Julian day
 julianDay(year, month, day, hour?, calendarType?)
+
+// Convert Julian day back to date
 julianDayToDate(jd, calendarType?)
+```
+
+**Examples:**
+```typescript
+// Using Date object (easiest)
+const jd = dateToJulianDay(new Date('1990-05-15T14:30:00Z'));
+
+// Using date components
+const jd2 = julianDay(1990, 5, 15, 14.5);  // Same result
+
+// Current time
+const now = dateToJulianDay(new Date());
 ```
 
 ### Planetary Positions
@@ -147,7 +166,7 @@ import {
 
 ```typescript
 import {
-  julianDay,
+  dateToJulianDay,
   calculatePosition,
   calculateHouses,
   Planet,
@@ -156,7 +175,8 @@ import {
 } from '@swisseph/node';
 
 // Birth: May 15, 1990, 14:30 UTC, New York (40.7128°N, 74.0060°W)
-const jd = julianDay(1990, 5, 15, 14.5);
+const birthDate = new Date('1990-05-15T14:30:00Z');
+const jd = dateToJulianDay(birthDate);
 
 // Calculate all planet positions
 const planets = [
@@ -220,9 +240,10 @@ close();
 ### Planetary Aspects
 
 ```typescript
-import { julianDay, calculatePosition, Planet, close } from '@swisseph/node';
+import { dateToJulianDay, calculatePosition, Planet, close } from '@swisseph/node';
 
-const jd = julianDay(2025, 6, 15);
+// Calculate for current time
+const jd = dateToJulianDay(new Date());
 
 // Calculate positions
 const sun = calculatePosition(jd, Planet.Sun);

@@ -19,6 +19,7 @@ import {
   SolarEclipse,
   DateTime,
   ExtendedDateTime,
+  RiseTransitSet,
   normalizeFlags,
   normalizeEclipseTypes,
   LunarEclipseImpl,
@@ -406,6 +407,222 @@ export function findNextSolarEclipse(
  */
 export function getCelestialBodyName(body: CelestialBody): string {
   return binding.get_planet_name(body);
+}
+
+/**
+ * Set the sidereal mode (ayanamsa system) for sidereal calculations
+ *
+ * This function must be called before calculating sidereal positions with
+ * CalculationFlag.Sidereal. Different ayanamsa systems are used in various
+ * traditions of astrology, particularly in Vedic (Jyotish) astrology.
+ *
+ * @param siderealMode - Ayanamsa system to use (e.g., SiderealMode.Lahiri for Vedic)
+ * @param t0 - Reference date (Julian day) for custom ayanamsa (default: 0)
+ * @param ayanT0 - Initial value of ayanamsa in degrees for custom mode (default: 0)
+ *
+ * @example
+ * import { setSiderealMode, SiderealMode, calculatePosition, CalculationFlag, Planet } from '@swisseph/node';
+ *
+ * // Set Lahiri ayanamsa (most common in Vedic astrology)
+ * setSiderealMode(SiderealMode.Lahiri);
+ *
+ * // Calculate sidereal position of Sun
+ * const jd = julianDay(2025, 1, 1);
+ * const sun = calculatePosition(jd, Planet.Sun, CalculationFlag.Sidereal | CalculationFlag.Speed);
+ * console.log(`Sidereal Sun: ${sun.longitude}°`);
+ *
+ * // Set Raman ayanamsa
+ * setSiderealMode(SiderealMode.Raman);
+ *
+ * // Set custom ayanamsa
+ * setSiderealMode(SiderealMode.UserDefined, 2451545.0, 23.85);
+ */
+export function setSiderealMode(
+  siderealMode: number,
+  t0: number = 0,
+  ayanT0: number = 0
+): void {
+  binding.set_sid_mode(siderealMode, t0, ayanT0);
+}
+
+/**
+ * Set the geographic location for topocentric calculations
+ *
+ * This function must be called before calculating topocentric positions with
+ * CalculationFlag.Topocentric. Topocentric positions account for the observer's
+ * location on Earth, which is particularly important for the Moon due to parallax.
+ *
+ * @param longitude - Geographic longitude in degrees (positive = east, negative = west)
+ * @param latitude - Geographic latitude in degrees (positive = north, negative = south)
+ * @param altitude - Altitude above sea level in meters
+ *
+ * @example
+ * import { setTopocentric, calculatePosition, CalculationFlag, Planet } from '@swisseph/node';
+ *
+ * // Set location to New York City
+ * setTopocentric(-74.0060, 40.7128, 10); // lon, lat, altitude
+ *
+ * // Calculate topocentric Moon position
+ * const jd = julianDay(2025, 1, 1);
+ * const moon = calculatePosition(
+ *   jd,
+ *   Planet.Moon,
+ *   CalculationFlag.Topocentric | CalculationFlag.Speed
+ * );
+ * console.log(`Topocentric Moon: ${moon.longitude}°`);
+ *
+ * // Set location to Mumbai for Vedic calculations
+ * setTopocentric(72.8777, 19.0760, 14);
+ * setSiderealMode(SiderealMode.Lahiri);
+ * const siderealMoon = calculatePosition(
+ *   jd,
+ *   Planet.Moon,
+ *   CalculationFlag.Sidereal | CalculationFlag.Topocentric | CalculationFlag.Speed
+ * );
+ */
+export function setTopocentric(
+  longitude: number,
+  latitude: number,
+  altitude: number
+): void {
+  binding.set_topo(longitude, latitude, altitude);
+}
+
+/**
+ * Get the ayanamsa (sidereal offset) value for a given date
+ *
+ * The ayanamsa is the distance between the tropical and sidereal zodiacs.
+ * This function returns the current offset in degrees for the ayanamsa system
+ * that was set with setSiderealMode().
+ *
+ * @param julianDay - Julian day number in Universal Time
+ * @returns Ayanamsa value in degrees
+ *
+ * @example
+ * import { getAyanamsa, setSiderealMode, SiderealMode, julianDay } from '@swisseph/node';
+ *
+ * // Get Lahiri ayanamsa for a date
+ * setSiderealMode(SiderealMode.Lahiri);
+ * const jd = julianDay(2025, 1, 1);
+ * const ayanamsa = getAyanamsa(jd);
+ * console.log(`Lahiri ayanamsa: ${ayanamsa.toFixed(4)}°`);
+ *
+ * // Compare different ayanamsa systems
+ * setSiderealMode(SiderealMode.Raman);
+ * const ramanAyanamsa = getAyanamsa(jd);
+ * console.log(`Raman ayanamsa: ${ramanAyanamsa.toFixed(4)}°`);
+ *
+ * setSiderealMode(SiderealMode.Krishnamurti);
+ * const kpAyanamsa = getAyanamsa(jd);
+ * console.log(`KP ayanamsa: ${kpAyanamsa.toFixed(4)}°`);
+ */
+export function getAyanamsa(julianDay: number): number {
+  return binding.get_ayanamsa_ut(julianDay);
+}
+
+/**
+ * Calculate rise, transit, or set time for a celestial body
+ *
+ * Finds the time when a celestial body rises, transits (culminates), or sets
+ * for a given location. This is essential for calculating almanac data,
+ * planetary hours, and observational astrology.
+ *
+ * @param startJulianDay - Julian day to start search from
+ * @param body - Celestial body to calculate
+ * @param eventType - Type of event (RiseTransitFlag.Rise, Set, UpperTransit, or LowerTransit)
+ * @param longitude - Geographic longitude in degrees (positive = east, negative = west)
+ * @param latitude - Geographic latitude in degrees (positive = north, negative = south)
+ * @param altitude - Altitude above sea level in meters
+ * @param flags - Calculation flags (default: SwissEphemeris)
+ * @param atmosphericPressure - Atmospheric pressure in millibars (default: 0 = standard)
+ * @param atmosphericTemperature - Atmospheric temperature in Celsius (default: 0 = standard)
+ * @returns RiseTransitSet object with time of event
+ *
+ * @example
+ * import {
+ *   calculateRiseTransitSet,
+ *   RiseTransitFlag,
+ *   Planet,
+ *   julianDay,
+ *   julianDayToDate
+ * } from '@swisseph/node';
+ *
+ * // Find sunrise in New York
+ * const jd = julianDay(2025, 1, 1);
+ * const sunrise = calculateRiseTransitSet(
+ *   jd,
+ *   Planet.Sun,
+ *   RiseTransitFlag.Rise,
+ *   -74.0060,  // New York longitude
+ *   40.7128,   // New York latitude
+ *   10         // altitude in meters
+ * );
+ * console.log(`Sunrise: ${julianDayToDate(sunrise.time)}`);
+ *
+ * // Find moonrise
+ * const moonrise = calculateRiseTransitSet(
+ *   jd,
+ *   Planet.Moon,
+ *   RiseTransitFlag.Rise,
+ *   -74.0060,
+ *   40.7128,
+ *   10
+ * );
+ *
+ * // Find Sun's upper transit (noon)
+ * const noon = calculateRiseTransitSet(
+ *   jd,
+ *   Planet.Sun,
+ *   RiseTransitFlag.UpperTransit,
+ *   -74.0060,
+ *   40.7128,
+ *   10
+ * );
+ *
+ * // With atmospheric refraction correction
+ * const preciseRise = calculateRiseTransitSet(
+ *   jd,
+ *   Planet.Sun,
+ *   RiseTransitFlag.Rise,
+ *   -74.0060,
+ *   40.7128,
+ *   10,
+ *   CalculationFlag.SwissEphemeris,
+ *   1013.25,  // standard pressure in millibars
+ *   15        // temperature in Celsius
+ * );
+ */
+export function calculateRiseTransitSet(
+  startJulianDay: number,
+  body: CelestialBody,
+  eventType: number,
+  longitude: number,
+  latitude: number,
+  altitude: number,
+  flags: CalculationFlagInput = CalculationFlag.SwissEphemeris,
+  atmosphericPressure: number = 0,
+  atmosphericTemperature: number = 0
+): RiseTransitSet {
+  const normalizedFlags = normalizeFlags(flags);
+  ensureEphemerisInitialized(normalizedFlags);
+
+  const geopos = [longitude, latitude, altitude];
+  const result = binding.rise_trans(
+    startJulianDay,
+    body,
+    eventType,
+    geopos,
+    normalizedFlags,
+    atmosphericPressure,
+    atmosphericTemperature
+  ) as [number, number];
+
+  const [retFlag, time] = result;
+
+  return {
+    time,
+    eventType: retFlag,
+  };
 }
 
 /**

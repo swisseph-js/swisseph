@@ -254,3 +254,15 @@ export interface SolarEclipse {
    */
   isNonCentral(): boolean;
 }
+
+/**
+ * Rise, transit, or set time result
+ * Result from calculateRiseTransitSet()
+ */
+export interface RiseTransitSet {
+  /** Time of event in Julian days (Universal Time) */
+  time: number;
+
+  /** Event type (rise, set, or transit) */
+  eventType: number;
+}

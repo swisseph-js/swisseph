@@ -16,6 +16,8 @@ export {
   HousePoint,
   CalculationFlag,
   EclipseType,
+  SiderealMode,
+  RiseTransitFlag,
   CommonCalculationFlags,
   CommonEclipseTypes,
   AsteroidOffset,
@@ -35,6 +37,7 @@ export type {
   HouseData,
   LunarEclipse,
   SolarEclipse,
+  RiseTransitSet,
 } from './results.js';
 
 // Export implementation classes

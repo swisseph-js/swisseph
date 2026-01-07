@@ -281,6 +281,107 @@ export const CommonEclipseTypes = {
 } as const;
 
 /**
+ * Sidereal modes (Ayanamsa systems)
+ * Used with setSiderealMode() for sidereal astrology calculations
+ */
+export enum SiderealMode {
+  /** Fagan/Bradley (default) */
+  FaganBradley = 0,
+  /** Lahiri (most common in Vedic astrology) */
+  Lahiri = 1,
+  /** De Luce */
+  DeLuce = 2,
+  /** Raman */
+  Raman = 3,
+  /** Ushashashi */
+  Ushashashi = 4,
+  /** Krishnamurti */
+  Krishnamurti = 5,
+  /** Djwhal Khul */
+  DjwhalKhul = 6,
+  /** Yukteshwar */
+  Yukteshwar = 7,
+  /** JN Bhasin */
+  JNBhasin = 8,
+  /** Babylonian (Kugler 1) */
+  BabylKugler1 = 9,
+  /** Babylonian (Kugler 2) */
+  BabylKugler2 = 10,
+  /** Babylonian (Kugler 3) */
+  BabylKugler3 = 11,
+  /** Babylonian (Huber) */
+  BabylHuber = 12,
+  /** Babylonian (EtPSC) */
+  BabylEtPSC = 13,
+  /** Aldebaran at 15 Taurus */
+  Aldebaran15Tau = 14,
+  /** Hipparchos */
+  Hipparchos = 15,
+  /** Sassanian */
+  Sassanian = 16,
+  /** Galactic Center at 0 Sagittarius */
+  GalacticCenter0Sag = 17,
+  /** J2000 */
+  J2000 = 18,
+  /** J1900 */
+  J1900 = 19,
+  /** B1950 */
+  B1950 = 20,
+  /** Surya Siddhanta */
+  SuryaSiddhanta = 21,
+  /** Surya Siddhanta (Mean Sun) */
+  SuryaSiddhantaMeanSun = 22,
+  /** Aryabhata */
+  Aryabhata = 23,
+  /** Aryabhata (Mean Sun) */
+  AryabhataMeanSun = 24,
+  /** SS Revati */
+  SSRevati = 25,
+  /** SS Citra */
+  SSCitra = 26,
+  /** True Citra */
+  TrueCitra = 27,
+  /** True Revati */
+  TrueRevati = 28,
+  /** True Pushya */
+  TruePushya = 29,
+  /** Galactic Center (Gil Brand) */
+  GalacticCenterGilBrand = 30,
+  /** Galactic Equator (IAU 1958) */
+  GalacticEquatorIAU1958 = 31,
+  /** Galactic Equator */
+  GalacticEquator = 32,
+  /** Galactic Equator (Mid Mula) */
+  GalacticEquatorMidMula = 33,
+  /** Skydram (Mardyks) */
+  Skydram = 34,
+  /** True Mula (Chandra Hari) */
+  TrueMula = 35,
+  /** Dhruva/Galactic Center/Mula (Wilhelm) */
+  DhruvaGalCenterMulaWilhelm = 36,
+  /** Aryabhata 522 */
+  Aryabhata522 = 37,
+  /** Babylonian/Britton */
+  BabylBritton = 38,
+  /** User defined ayanamsa */
+  UserDefined = 255
+}
+
+/**
+ * Rise/transit/set event type
+ */
+export enum RiseTransitFlag {
+  /** Rising event */
+  Rise = 1,
+  /** Setting event */
+  Set = 2,
+  /** Upper transit (culmination) */
+  UpperTransit = 4,
+  /** Lower transit (anti-culmination) */
+  LowerTransit = 8
+}
+
+/**
  * Constants for special offsets
  */
 export const AsteroidOffset = 10000;

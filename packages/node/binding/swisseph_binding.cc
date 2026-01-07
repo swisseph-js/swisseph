@@ -249,6 +249,115 @@ Napi::Value Houses(const Napi::CallbackInfo& info) {
   return result;
 }
 
+// Wrapper for swe_set_sid_mode
+Napi::Value SetSidMode(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected sid_mode, [t0], [ayan_t0]")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  int32 sid_mode = info[0].As<Napi::Number>().Int32Value();
+  double t0 = info.Length() >= 2 ? info[1].As<Napi::Number>().DoubleValue() : 0.0;
+  double ayan_t0 = info.Length() >= 3 ? info[2].As<Napi::Number>().DoubleValue() : 0.0;
+
+  swe_set_sid_mode(sid_mode, t0, ayan_t0);
+
+  return env.Undefined();
+}
+
+// Wrapper for swe_set_topo
+Napi::Value SetTopo(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 3) {
+    Napi::TypeError::New(env, "Expected geolon, geolat, geoalt")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  double geolon = info[0].As<Napi::Number>().DoubleValue();
+  double geolat = info[1].As<Napi::Number>().DoubleValue();
+  double geoalt = info[2].As<Napi::Number>().DoubleValue();
+
+  swe_set_topo(geolon, geolat, geoalt);
+
+  return env.Undefined();
+}
+
+// Wrapper for swe_get_ayanamsa_ut
+Napi::Value GetAyanamsaUt(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 1) {
+    Napi::TypeError::New(env, "Expected tjd_ut")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  double tjd_ut = info[0].As<Napi::Number>().DoubleValue();
+  double ayanamsa = swe_get_ayanamsa_ut(tjd_ut);
+
+  return Napi::Number::New(env, ayanamsa);
+}
+
+// Wrapper for swe_rise_trans
+Napi::Value RiseTrans(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 4) {
+    Napi::TypeError::New(env, "Expected tjd_ut, ipl, rsmi, geopos (array), [epheflag], [atpress], [attemp]")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  double tjd_ut = info[0].As<Napi::Number>().DoubleValue();
+  int32 ipl = info[1].As<Napi::Number>().Int32Value();
+  int32 rsmi = info[2].As<Napi::Number>().Int32Value();
+
+  // geopos is expected as an array [longitude, latitude, altitude]
+  if (!info[3].IsArray()) {
+    Napi::TypeError::New(env, "geopos must be an array [longitude, latitude, altitude]")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  Napi::Array geoposArray = info[3].As<Napi::Array>();
+  if (geoposArray.Length() < 3) {
+    Napi::TypeError::New(env, "geopos must have 3 elements [longitude, latitude, altitude]")
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  double geopos[3];
+  geopos[0] = geoposArray.Get(0u).As<Napi::Number>().DoubleValue();
+  geopos[1] = geoposArray.Get(1u).As<Napi::Number>().DoubleValue();
+  geopos[2] = geoposArray.Get(2u).As<Napi::Number>().DoubleValue();
+
+  int32 epheflag = info.Length() >= 5 ? info[4].As<Napi::Number>().Int32Value() : SEFLG_SWIEPH;
+  double atpress = info.Length() >= 6 ? info[5].As<Napi::Number>().DoubleValue() : 0.0;
+  double attemp = info.Length() >= 7 ? info[6].As<Napi::Number>().DoubleValue() : 0.0;
+
+  double tret;
+  char serr[256];
+
+  // starname is NULL for planets (only used for fixed stars)
+  int32 ret = swe_rise_trans(tjd_ut, ipl, NULL, epheflag, rsmi, geopos, atpress, attemp, &tret, serr);
+
+  if (ret < 0) {
+    Napi::Error::New(env, serr).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  Napi::Array result = Napi::Array::New(env, 2);
+  result[0u] = Napi::Number::New(env, ret);
+  result[1u] = Napi::Number::New(env, tret);
+
+  return result;
+}
+
 // Initialize the addon
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("set_ephe_path", Napi::Function::New(env, SetEphePath));
@@ -260,6 +369,10 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("lun_eclipse_when", Napi::Function::New(env, LunEclipseWhen));
   exports.Set("sol_eclipse_when_glob", Napi::Function::New(env, SolEclipseWhenGlob));
   exports.Set("houses", Napi::Function::New(env, Houses));
+  exports.Set("set_sid_mode", Napi::Function::New(env, SetSidMode));
+  exports.Set("set_topo", Napi::Function::New(env, SetTopo));
+  exports.Set("get_ayanamsa_ut", Napi::Function::New(env, GetAyanamsaUt));
+  exports.Set("rise_trans", Napi::Function::New(env, RiseTrans));
 
   return exports;
 }

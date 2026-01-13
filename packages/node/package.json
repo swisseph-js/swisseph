@@ -1,6 +1,6 @@
 {
   "name": "@swisseph/node",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Swiss Ephemeris for Node.js - high precision astronomical calculations with native bindings",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,12 +42,13 @@
     "astrology",
     "ephemeris",
     "swiss-ephemeris",
+    "swisseph",
+    "sweph",
     "planets",
     "celestial",
     "julian-day",
     "typescript",
-    "native",
-    "nodejs"
+    "native"
   ],
   "author": "",
   "license": "AGPL-3.0",

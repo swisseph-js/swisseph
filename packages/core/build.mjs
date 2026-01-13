@@ -2,9 +2,12 @@ import * as esbuild from 'esbuild';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 
-// Clean dist
+// Clean dist and build info
 if (fs.existsSync('dist')) {
   fs.rmSync('dist', { recursive: true, force: true });
+}
+if (fs.existsSync('tsconfig.tsbuildinfo')) {
+  fs.rmSync('tsconfig.tsbuildinfo');
 }
 
 // Build ESM

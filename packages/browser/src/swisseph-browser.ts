@@ -318,6 +318,15 @@ export class SwissEphemeris {
     calendarType: CalendarType = CalendarType.Gregorian
   ): number {
     this._checkReady();
+
+    // Validate inputs are valid numbers
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day) || !Number.isFinite(hour)) {
+      throw new TypeError(
+        `julianDay requires finite numbers. Received: ` +
+        `year=${year}, month=${month}, day=${day}, hour=${hour}`
+      );
+    }
+
     return this._julday(year, month, day, hour, calendarType);
   }
 
@@ -348,6 +357,12 @@ export class SwissEphemeris {
     calendarType: CalendarType = CalendarType.Gregorian
   ): number {
     this._checkReady();
+
+    // Validate that the date object is valid
+    if (!(date instanceof Date)) {
+      throw new TypeError('dateToJulianDay expects a Date object');
+    }
+
     const year = date.getUTCFullYear();
     const month = date.getUTCMonth() + 1; // JavaScript months are 0-indexed
     const day = date.getUTCDate();
@@ -355,6 +370,15 @@ export class SwissEphemeris {
     const minutes = date.getUTCMinutes();
     const seconds = date.getUTCSeconds();
     const milliseconds = date.getUTCMilliseconds();
+
+    // Check if date is invalid (results in NaN)
+    if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hours)) {
+      throw new TypeError(
+        `Invalid Date object provided to dateToJulianDay. ` +
+        `Date.toString() returned: "${date.toString()}". ` +
+        `Please ensure the date is valid (e.g., avoid new Date("invalid")).`
+      );
+    }
 
     // Convert to decimal hours
     const decimalHours = hours + minutes / 60 + seconds / 3600 + milliseconds / 3600000;

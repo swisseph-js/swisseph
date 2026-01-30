@@ -1,6 +1,6 @@
 {
   "name": "@swisseph/browser",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Swiss Ephemeris for browsers - WebAssembly astronomical calculations",
   "type": "module",
   "main": "dist/swisseph-browser.js",

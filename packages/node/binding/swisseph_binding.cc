@@ -358,6 +358,32 @@ Napi::Value RiseTrans(const Napi::CallbackInfo& info) {
   return result;
 }
 
+// Wrapper for swe_get_ayanamsa_ex_ut
+Napi::Value GetAyanamsaExUt(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+
+  if (info.Length() < 2) {
+    Napi::TypeError::New(env, "Expected tjd_ut and iflag").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  double tjd_ut = info[0].As<Napi::Number>().DoubleValue();
+  int32 iflag = info[1].As<Napi::Number>().Int32Value();
+
+  double daya;
+  char serr[256];
+  memset(serr, 0, sizeof(serr));
+
+  int32 ret = swe_get_ayanamsa_ex_ut(tjd_ut, iflag, &daya, serr);
+
+  if (ret < 0) {
+    Napi::Error::New(env, serr).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  return Napi::Number::New(env, daya);
+}
+
 // Initialize the addon
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("set_ephe_path", Napi::Function::New(env, SetEphePath));
@@ -372,6 +398,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("set_sid_mode", Napi::Function::New(env, SetSidMode));
   exports.Set("set_topo", Napi::Function::New(env, SetTopo));
   exports.Set("get_ayanamsa_ut", Napi::Function::New(env, GetAyanamsaUt));
+  exports.Set("get_ayanamsa_ex_ut", Napi::Function::New(env, GetAyanamsaExUt));
   exports.Set("rise_trans", Napi::Function::New(env, RiseTrans));
 
   return exports;

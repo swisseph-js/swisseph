@@ -543,6 +543,20 @@ export function getAyanamsa(julianDay: number): number {
 }
 
 /**
+ * Get the ayanamsa (sidereal offset) value using the extended function
+ *
+ * @param julianDay - Julian day number in Universal Time
+ * @param flags - Calculation flags (default: SwissEphemeris)
+ * @returns Ayanamsa value in degrees
+ */
+export function getAyanamsaExUt(
+  julianDay: number,
+  flags: CalculationFlagInput = CalculationFlag.SwissEphemeris
+): number {
+  return binding.get_ayanamsa_ex_ut(julianDay, normalizeFlags(flags));
+}
+
+/**
  * Calculate rise, transit, or set time for a celestial body
  *
  * Finds the time when a celestial body rises, transits (culminates), or sets

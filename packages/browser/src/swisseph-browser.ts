@@ -93,6 +93,8 @@ export class SwissEphemeris {
     gregflag: number
   ) => number;
   private _getPlanetName!: (ipl: number) => string;
+  private _setSiderealMode!: (siderealMode: number, t0: number, ayanT0: number) => void;
+  private _getAyanamsa!: (julianDay: number) => number;
   private _close!: () => void;
   private _version!: () => string;
 
@@ -176,6 +178,18 @@ export class SwissEphemeris {
     this._getPlanetName = m.cwrap<typeof this._getPlanetName>(
       'swe_get_planet_name_wrap',
       'string',
+      ['number']
+    );
+
+    this._setSiderealMode = m.cwrap<typeof this._setSiderealMode>(
+      'swe_set_sid_mode_wrap',
+      null,
+      ['number', 'number', 'number']
+    );
+
+    this._getAyanamsa = m.cwrap<typeof this._getAyanamsa>(
+      'swe_get_ayanamsa_ut_wrap',
+      'number',
       ['number']
     );
 
@@ -507,6 +521,54 @@ export class SwissEphemeris {
   getCelestialBodyName(body: CelestialBody): string {
     this._checkReady();
     return this._getPlanetName(body);
+  }
+
+  /** Set the ayanamsa system used for sidereal calculations. */
+  setSiderealMode(
+    siderealMode: number,
+    t0: number = 0,
+    ayanT0: number = 0
+  ): void {
+    this._checkReady();
+    this._setSiderealMode(siderealMode, t0, ayanT0);
+  }
+
+  /** Get the ayanamsa for a Julian Day in Universal Time. */
+  getAyanamsa(julianDay: number): number {
+    this._checkReady();
+    return this._getAyanamsa(julianDay);
+  }
+
+  /** Get the ayanamsa using explicit calculation flags. */
+  getAyanamsaExUt(
+    julianDay: number,
+    flags: CalculationFlagInput = CalculationFlag.SwissEphemeris
+  ): number {
+    this._checkReady();
+
+    const normalizedFlags = normalizeFlags(flags);
+    const m = this.module!;
+    const ayanamsaPtr = m._malloc(8);
+    const serrPtr = m._malloc(256);
+
+    try {
+      const retflag = m.ccall(
+        'swe_get_ayanamsa_ex_ut_wrap',
+        'number',
+        ['number', 'number', 'number', 'number'],
+        [julianDay, normalizedFlags, ayanamsaPtr, serrPtr]
+      );
+
+      if (retflag < 0) {
+        const error = m.UTF8ToString(serrPtr);
+        throw new Error(error || 'Failed to calculate ayanamsa');
+      }
+
+      return m.getValue(ayanamsaPtr, 'double');
+    } finally {
+      m._free(ayanamsaPtr);
+      m._free(serrPtr);
+    }
   }
 
   /**

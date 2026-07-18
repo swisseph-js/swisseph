@@ -117,7 +117,7 @@
     <div id="test-results"></div>
 
     <script type="module">
-        import { SwissEphemeris, Planet, Asteroid, CalendarType, CalculationFlag, HouseSystem } from '../dist/swisseph-browser.js';
+        import { SwissEphemeris, Planet, Asteroid, CalendarType, CalculationFlag, HouseSystem, SiderealMode } from '../dist/swisseph-browser.js';
 
         // Simple test framework
         class TestRunner {
@@ -403,6 +403,40 @@
                     expect(mars.longitude).toBeGreaterThanOrEqual(0);
                     expect(mars.longitude).toBeLessThan(360);
                     expect(mars.longitudeSpeed).toBeTruthy();
+                });
+            });
+
+            runner.describe('sidereal calculations', () => {
+                runner.test('should calculate Lahiri ayanamsa', () => {
+                    const jd = swe.julianDay(2025, 1, 1);
+                    swe.setSiderealMode(SiderealMode.Lahiri);
+
+                    const ayanamsa = swe.getAyanamsa(jd);
+                    expect(ayanamsa).toBeGreaterThan(20);
+                    expect(ayanamsa).toBeLessThan(30);
+                });
+
+                runner.test('should calculate extended ayanamsa with explicit flags', () => {
+                    const jd = swe.julianDay(2025, 1, 1);
+                    swe.setSiderealMode(SiderealMode.Lahiri);
+
+                    const ayanamsa = swe.getAyanamsaExUt(jd, CalculationFlag.MoshierEphemeris);
+                    expect(ayanamsa).toBeGreaterThan(20);
+                    expect(ayanamsa).toBeLessThan(30);
+                });
+
+                runner.test('should normalize calculation flag arrays', () => {
+                    const jd = swe.julianDay(2025, 1, 1);
+                    const numeric = swe.getAyanamsaExUt(
+                        jd,
+                        CalculationFlag.MoshierEphemeris | CalculationFlag.NoNutation
+                    );
+                    const array = swe.getAyanamsaExUt(jd, [
+                        CalculationFlag.MoshierEphemeris,
+                        CalculationFlag.NoNutation
+                    ]);
+
+                    expect(array).toBeCloseTo(numeric, 10);
                 });
             });
 

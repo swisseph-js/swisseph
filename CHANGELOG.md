@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `getAyanamsaExUt()` to `@swisseph/node`, exposing `swe_get_ayanamsa_ex_ut` with explicit calculation flags and native error propagation.
+- Added compatible `setSiderealMode()`, `getAyanamsa()`, and `getAyanamsaExUt()` methods to `@swisseph/browser`.
 - Added regression coverage and API documentation for extended ayanamsa calculations.
 
 ## [1.0.2] - 2026-01-02

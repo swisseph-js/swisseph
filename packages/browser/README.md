@@ -115,6 +115,19 @@ swe.findNextSolarEclipse(startJd, flags?, eclipseType?, backward?)
 // Returns eclipse object with methods: isTotal(), isPartial(), getTotalityDuration(), etc.
 ```
 
+### Sidereal Calculations
+
+The browser and Node packages expose the same sidereal API:
+
+```typescript
+import { SiderealMode, CalculationFlag } from '@swisseph/browser';
+
+swe.setSiderealMode(SiderealMode.Lahiri);
+
+const ayanamsa = swe.getAyanamsa(jd);
+const extended = swe.getAyanamsaExUt(jd, CalculationFlag.SwissEphemeris);
+```
+
 ### Utilities
 
 ```typescript

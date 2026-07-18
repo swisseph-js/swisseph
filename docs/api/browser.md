@@ -19,6 +19,7 @@ import {
   Asteroid,
   LunarPoint,
   HouseSystem,
+  SiderealMode,
   CalculationFlag,
   CalendarType,
 
@@ -471,6 +472,45 @@ console.log(`Is central: ${eclipse.isCentral()}`);
 ---
 
 ## Utility Functions
+
+### setSiderealMode()
+
+Select the ayanamsa system used by sidereal calculations.
+
+```typescript
+swe.setSiderealMode(
+  siderealMode: number,
+  t0?: number,
+  ayanT0?: number
+): void
+```
+
+```typescript
+swe.setSiderealMode(SiderealMode.Lahiri);
+```
+
+The optional `t0` and `ayanT0` parameters define a custom ayanamsa when using `SiderealMode.UserDefined`.
+
+### getAyanamsa()
+
+Return the ayanamsa in degrees for a Julian Day in Universal Time using the selected sidereal mode.
+
+```typescript
+const ayanamsa = swe.getAyanamsa(jd);
+```
+
+### getAyanamsaExUt()
+
+Return the ayanamsa using explicit calculation flags. Its signature and default match `@swisseph/node`.
+
+```typescript
+const ayanamsa = swe.getAyanamsaExUt(
+  jd,
+  CalculationFlag.SwissEphemeris
+);
+```
+
+This method accepts every `CalculationFlagInput` form, including numeric bitmasks and flag arrays, and throws when Swiss Ephemeris reports an error.
 
 ### getCelestialBodyName()
 

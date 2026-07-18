@@ -47,6 +47,21 @@ int swe_houses_wrap(double tjd_ut, double geolat, double geolon, int hsys, doubl
 }
 
 EMSCRIPTEN_KEEPALIVE
+void swe_set_sid_mode_wrap(int sid_mode, double t0, double ayan_t0) {
+    swe_set_sid_mode(sid_mode, t0, ayan_t0);
+}
+
+EMSCRIPTEN_KEEPALIVE
+double swe_get_ayanamsa_ut_wrap(double tjd_ut) {
+    return swe_get_ayanamsa_ut(tjd_ut);
+}
+
+EMSCRIPTEN_KEEPALIVE
+int swe_get_ayanamsa_ex_ut_wrap(double tjd_ut, int iflag, double *daya, char *serr) {
+    return swe_get_ayanamsa_ex_ut(tjd_ut, iflag, daya, serr);
+}
+
+EMSCRIPTEN_KEEPALIVE
 void swe_close_wrap(void) {
     swe_close();
 }

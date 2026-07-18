@@ -553,7 +553,9 @@ export function getAyanamsaExUt(
   julianDay: number,
   flags: CalculationFlagInput = CalculationFlag.SwissEphemeris
 ): number {
-  return binding.get_ayanamsa_ex_ut(julianDay, normalizeFlags(flags));
+  const normalizedFlags = normalizeFlags(flags);
+  ensureEphemerisInitialized(normalizedFlags);
+  return binding.get_ayanamsa_ex_ut(julianDay, normalizedFlags);
 }
 
 /**

@@ -116,6 +116,21 @@ findNextSolarEclipse(startJd, flags?, eclipseType?, backward?)
 // Returns eclipse object with methods: isTotal(), isPartial(), getTotalityDuration(), etc.
 ```
 
+### Sidereal Calculations
+
+```typescript
+setSiderealMode(mode, t0?, ayanT0?)
+getAyanamsa(jd)
+getAyanamsaExUt(jd, flags?)
+```
+
+Use `getAyanamsaExUt()` when the ayanamsa must use the same explicit ephemeris flags as a planetary calculation:
+
+```typescript
+setSiderealMode(SiderealMode.Lahiri);
+const ayanamsa = getAyanamsaExUt(jd, CalculationFlag.SwissEphemeris);
+```
+
 ### Utilities
 
 ```typescript

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added `getAyanamsaExUt()` to `@swisseph/node`, exposing `swe_get_ayanamsa_ex_ut` with explicit calculation flags and native error propagation.
+- Added regression coverage and API documentation for extended ayanamsa calculations.
+
 ## [1.0.2] - 2026-01-02
 
 **Note:** This release only affects `@swisseph/browser`. The `@swisseph/node` and `@swisseph/core` packages remain unchanged.

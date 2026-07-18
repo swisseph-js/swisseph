@@ -22,6 +22,11 @@ import {
   findNextLunarEclipse,
   findNextSolarEclipse,
 
+  // Sidereal calculations
+  setSiderealMode,
+  getAyanamsa,
+  getAyanamsaExUt,
+
   // Utilities
   getCelestialBodyName,
   setEphemerisPath,
@@ -32,6 +37,7 @@ import {
   Asteroid,
   LunarPoint,
   HouseSystem,
+  SiderealMode,
   CalculationFlag,
   CalendarType,
 
@@ -335,6 +341,30 @@ console.log(`Is central: ${eclipse.isCentral()}`);
 ---
 
 ## Utility Functions
+
+### getAyanamsaExUt()
+
+Get the ayanamsa (sidereal offset) for a Julian Day in Universal Time using explicit calculation flags.
+
+```typescript
+function getAyanamsaExUt(
+  julianDay: number,
+  flags?: CalculationFlagInput
+): number
+```
+
+The default flag is `CalculationFlag.SwissEphemeris`. Set the desired sidereal mode first with `setSiderealMode()`.
+
+```typescript
+setSiderealMode(SiderealMode.Lahiri);
+
+const ayanamsa = getAyanamsaExUt(
+  julianDay(2025, 1, 1),
+  CalculationFlag.SwissEphemeris
+);
+```
+
+Use this extended form when the ayanamsa must be calculated with the same ephemeris flags as planetary positions. The function throws if Swiss Ephemeris reports an error.
 
 ### getCelestialBodyName()
 

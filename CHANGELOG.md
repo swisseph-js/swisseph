@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed npm installation of `@swisseph/node` and `@swisseph/browser` by publishing pnpm-packed tarballs with concrete `@swisseph/core` dependency versions.
+
 ### Added
 
 - Added `getAyanamsaExUt()` to `@swisseph/node`, exposing `swe_get_ayanamsa_ex_ut` with explicit calculation flags and native error propagation.

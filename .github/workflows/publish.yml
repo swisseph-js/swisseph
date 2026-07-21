@@ -45,25 +45,33 @@ jobs:
           echo "Selected package scope: $PACKAGE"
           
           if [ "$PACKAGE" == "all" ]; then
-            echo "packages=core,node,browser" >> $GITHUB_OUTPUT
-            echo "publish_core=true" >> $GITHUB_OUTPUT
-            echo "publish_node=true" >> $GITHUB_OUTPUT
-            echo "publish_browser=true" >> $GITHUB_OUTPUT
+            {
+              echo "packages=core,node,browser"
+              echo "publish_core=true"
+              echo "publish_node=true"
+              echo "publish_browser=true"
+            } >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGE" == "core" ]; then
-            echo "packages=core" >> $GITHUB_OUTPUT
-            echo "publish_core=true" >> $GITHUB_OUTPUT
-            echo "publish_node=false" >> $GITHUB_OUTPUT
-            echo "publish_browser=false" >> $GITHUB_OUTPUT
+            {
+              echo "packages=core"
+              echo "publish_core=true"
+              echo "publish_node=false"
+              echo "publish_browser=false"
+            } >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGE" == "node" ]; then
-            echo "packages=core,node" >> $GITHUB_OUTPUT
-            echo "publish_core=true" >> $GITHUB_OUTPUT
-            echo "publish_node=true" >> $GITHUB_OUTPUT
-            echo "publish_browser=false" >> $GITHUB_OUTPUT
+            {
+              echo "packages=core,node"
+              echo "publish_core=true"
+              echo "publish_node=true"
+              echo "publish_browser=false"
+            } >> "$GITHUB_OUTPUT"
           elif [ "$PACKAGE" == "browser" ]; then
-            echo "packages=core,browser" >> $GITHUB_OUTPUT
-            echo "publish_core=true" >> $GITHUB_OUTPUT
-            echo "publish_node=false" >> $GITHUB_OUTPUT
-            echo "publish_browser=true" >> $GITHUB_OUTPUT
+            {
+              echo "packages=core,browser"
+              echo "publish_core=true"
+              echo "publish_node=false"
+              echo "publish_browser=true"
+            } >> "$GITHUB_OUTPUT"
           fi
 
   prebuild_node:
@@ -76,15 +84,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10.27.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -96,7 +104,7 @@ jobs:
         run: pnpm --filter @swisseph/node run prebuild
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: prebuilds-${{ matrix.os }}
           path: packages/node/prebuilds
@@ -115,18 +123,18 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10.27.0
 
@@ -155,7 +163,7 @@ jobs:
       # Download and merge prebuilds if we are publishing node
       - name: Download Node.js prebuilds
         if: needs.setup.outputs.publish_node == 'true'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: prebuilds-*
           path: packages/node/prebuilds
@@ -192,8 +200,11 @@ jobs:
           echo "Building @swisseph/core..."
           pnpm build
 
+          echo "Packing @swisseph/core with pnpm..."
+          pnpm pack --out "$RUNNER_TEMP/swisseph-core.tgz"
+
           echo "Publishing @swisseph/core with provenance..."
-          npm publish --access public --provenance
+          npm publish "$RUNNER_TEMP/swisseph-core.tgz" --access public --provenance
 
       - name: Build and publish @swisseph/node
         if: needs.setup.outputs.publish_node == 'true'
@@ -203,8 +214,15 @@ jobs:
           # Use build:js to avoid rebuilding native addon locally, since we have prebuilds
           pnpm run build:js
 
+          echo "Packing @swisseph/node with pnpm..."
+          pnpm pack --out "$RUNNER_TEMP/swisseph-node.tgz"
+          if tar -xOf "$RUNNER_TEMP/swisseph-node.tgz" package/package.json | grep -q 'workspace:'; then
+            echo "Packed @swisseph/node still contains a workspace dependency"
+            exit 1
+          fi
+
           echo "Publishing @swisseph/node with provenance..."
-          npm publish --access public --provenance
+          npm publish "$RUNNER_TEMP/swisseph-node.tgz" --access public --provenance
 
       - name: Build and publish @swisseph/browser
         if: needs.setup.outputs.publish_browser == 'true'
@@ -213,21 +231,30 @@ jobs:
           echo "Building @swisseph/browser..."
           pnpm run build:all
 
+          echo "Packing @swisseph/browser with pnpm..."
+          pnpm pack --out "$RUNNER_TEMP/swisseph-browser.tgz"
+          if tar -xOf "$RUNNER_TEMP/swisseph-browser.tgz" package/package.json | grep -q 'workspace:'; then
+            echo "Packed @swisseph/browser still contains a workspace dependency"
+            exit 1
+          fi
+
           echo "Publishing @swisseph/browser with provenance..."
-          npm publish --access public --provenance
+          npm publish "$RUNNER_TEMP/swisseph-browser.tgz" --access public --provenance
 
       - name: Publish summary
         if: always()
         run: |
-          echo "## Publishing Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Published packages:" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ needs.setup.outputs.publish_core }}" == "true" ]; then
-            echo "- ✅ @swisseph/core" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ "${{ needs.setup.outputs.publish_node }}" == "true" ]; then
-            echo "- ✅ @swisseph/node" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ "${{ needs.setup.outputs.publish_browser }}" == "true" ]; then
-            echo "- ✅ @swisseph/browser" >> $GITHUB_STEP_SUMMARY
-          fi
+          {
+            echo "## Publishing Summary"
+            echo ""
+            echo "Published packages:"
+            if [ "${{ needs.setup.outputs.publish_core }}" == "true" ]; then
+              echo "- ✅ @swisseph/core"
+            fi
+            if [ "${{ needs.setup.outputs.publish_node }}" == "true" ]; then
+              echo "- ✅ @swisseph/node"
+            fi
+            if [ "${{ needs.setup.outputs.publish_browser }}" == "true" ]; then
+              echo "- ✅ @swisseph/browser"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

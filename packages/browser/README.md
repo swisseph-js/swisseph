@@ -115,6 +115,21 @@ swe.findNextSolarEclipse(startJd, flags?, eclipseType?, backward?)
 // Returns eclipse object with methods: isTotal(), isPartial(), getTotalityDuration(), etc.
 ```
 
+Local circumstances (azimuths are compass bearings: 0° north, 90° east):
+
+```typescript
+swe.solarEclipseWhere(jd, flags?)                          // central line (or greatest point) at a moment
+swe.solarEclipseHow(jd, { longitude, latitude }, flags?)   // magnitude, obscuration, Sun's place, Saros
+swe.findNextSolarEclipseAt(startJd, place, flags?, backward?)
+// Returns contacts (firstContact … fourthContact), sunrise/sunset during it, attributes,
+// and isTotal(), isVisible(), centralDuration() (seconds of totality or annularity)
+swe.lunarEclipseHow(jd, place?, flags?)
+swe.findNextLunarEclipseAt(startJd, place, flags?, backward?)
+swe.horizontalCoordinates(jd, place, [lon, lat, dist], equatorial?)  // azimuth and altitude
+swe.setTopocentric(longitude, latitude, altitude?)         // for CalculationFlag.Topocentric
+swe.siderealTime(jd)                                        // Greenwich apparent sidereal time, hours
+```
+
 ### Sidereal Calculations
 
 The browser and Node packages expose the same sidereal API:

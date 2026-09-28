@@ -128,6 +128,40 @@ if (eclipse.isCentral()) {
 console.log(`Partial ends:   ${julianDayToDate(eclipse.partialEnd).toString()}`);
 ```
 
+## Local Circumstances
+
+Where an eclipse is central, how it looks from a place, and the next one a place will see. The
+same methods exist on the browser `SwissEphemeris` class. Azimuths are compass bearings (0° north,
+90° east).
+
+```typescript
+import {
+  julianDay,
+  julianDayToDate,
+  findNextSolarEclipse,
+  solarEclipseWhere,
+  findNextSolarEclipseAt,
+} from '@swisseph/node';
+
+const eclipse = findNextSolarEclipse(julianDay(2027, 7, 1));
+
+// The central line: sample where the shadow's axis meets the Earth
+for (let t = eclipse.centerLineBegin; t <= eclipse.centerLineEnd; t += 10 / 1440) {
+  const { longitude, latitude } = solarEclipseWhere(t);
+  console.log(longitude.toFixed(2), latitude.toFixed(2));
+}
+
+// From Luxor: total, about 6 min 21 s, the Sun nearly overhead
+const luxor = findNextSolarEclipseAt(julianDay(2027, 7, 1), { longitude: 32.64, latitude: 25.69 });
+console.log(luxor.isTotal(), luxor.centralDuration().toFixed(0), 's');
+console.log('Totality from', julianDayToDate(luxor.secondContact).toString());
+console.log('Sun at', luxor.attributes.sunAzimuth.toFixed(0), '°,', luxor.attributes.sunAltitude.toFixed(0), '° up');
+console.log('Saros', luxor.attributes.sarosSeries, 'member', luxor.attributes.sarosMember);
+```
+
+`solarEclipseHow(jd, place)` gives the same attributes for any moment (type 0 when the Sun isn't
+eclipsed there), and `findNextLunarEclipseAt` / `lunarEclipseHow` do the same for the Moon.
+
 ## Finding Previous Eclipses
 
 Use the `backward` parameter to search backward in time:

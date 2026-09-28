@@ -27,6 +27,18 @@ import {
   DateTimeImpl,
   CalculationFlag,
   CommonCalculationFlags,
+  GeoPosition,
+  SolarEclipseAttributes,
+  SolarEclipseWhere,
+  LocalSolarEclipse,
+  LunarEclipseAttributes,
+  LocalLunarEclipse,
+  HorizontalCoordinates,
+  compassBearing,
+  solarEclipseAttributes,
+  lunarEclipseAttributes,
+  localSolarEclipse,
+  localLunarEclipse,
 } from '@swisseph/core';
 
 /**
@@ -46,6 +58,7 @@ interface EmscriptenModule {
   ) => any;
   allocateUTF8: (str: string) => number;
   getValue: (ptr: number, type: string) => number;
+  setValue: (ptr: number, value: number, type: string) => void;
   UTF8ToString: (ptr: number) => string;
   _malloc: (size: number) => number;
   _free: (ptr: number) => void;
@@ -623,13 +636,13 @@ export class SwissEphemeris {
 
     return new LunarEclipseImpl(
       retflag,
-      tret[0],
-      tret[1],
-      tret[2],
-      tret[3],
-      tret[4],
-      tret[5],
-      tret[6]
+      tret[0], // maximum
+      tret[2], // partial begin
+      tret[3], // partial end
+      tret[4], // total begin
+      tret[5], // total end
+      tret[6], // penumbral begin
+      tret[7]  // penumbral end
     );
   }
 
@@ -685,14 +698,208 @@ export class SwissEphemeris {
 
     return new SolarEclipseImpl(
       retflag,
-      tret[0],
-      tret[1],
-      tret[2],
-      tret[3],
-      tret[4],
-      tret[5],
-      tret[6]
+      tret[0], // maximum
+      tret[2], // partial begin
+      tret[3], // partial end
+      tret[4], // central begin
+      tret[5], // central end
+      tret[6], // center line begin
+      tret[7]  // center line end
     );
+  }
+
+  // ─── Local eclipse circumstances ─────────────────────────────────────────
+
+  /** Allocates double arrays (and an error buffer) for one C call, and frees them after. */
+  private _withDoubles<T>(sizes: number[], run: (ptrs: number[], serr: number) => T): T {
+    const m = this.module!;
+    const ptrs = sizes.map((n) => m._malloc(n * 8));
+    const serr = m._malloc(256);
+    try {
+      return run(ptrs, serr);
+    } finally {
+      ptrs.forEach((p) => m._free(p));
+      m._free(serr);
+    }
+  }
+
+  private _readDoubles(ptr: number, n: number): number[] {
+    const m = this.module!;
+    return Array.from({ length: n }, (_, i) => m.getValue(ptr + i * 8, 'double'));
+  }
+
+  private _writeDoubles(ptr: number, values: number[]): void {
+    const m = this.module!;
+    values.forEach((v, i) => m.setValue(ptr + i * 8, v, 'double'));
+  }
+
+  private _place(ptr: number, place?: GeoPosition): void {
+    this._writeDoubles(ptr, [place?.longitude ?? 0, place?.latitude ?? 0, place?.altitude ?? 0]);
+  }
+
+  /**
+   * Set the observer's place for topocentric positions (CalculationFlag.Topocentric)
+   *
+   * @param longitude - Geographic longitude, east positive
+   * @param latitude - Geographic latitude, north positive
+   * @param altitude - Altitude above sea level in metres
+   */
+  setTopocentric(longitude: number, latitude: number, altitude: number = 0): void {
+    this._checkReady();
+    this.module!.ccall('swe_set_topo_wrap', null, ['number', 'number', 'number'], [longitude, latitude, altitude]);
+  }
+
+  /**
+   * Find where on Earth a solar eclipse is central at a given moment
+   *
+   * Sample it over the eclipse to trace the central line. For a non-central eclipse the
+   * position is where the eclipse is greatest.
+   *
+   * @example
+   * const e = swe.findNextSolarEclipse(swe.julianDay(2027, 7, 1));
+   * const at = swe.solarEclipseWhere(e.maximum);
+   * console.log(at.longitude, at.latitude, at.attributes.sarosSeries);
+   */
+  solarEclipseWhere(julianDay: number, flags: CalculationFlagInput = CalculationFlag.MoshierEphemeris): SolarEclipseWhere {
+    this._checkReady();
+    const m = this.module!;
+    return this._withDoubles([10, 20], ([geo, attr], serr) => {
+      const type = m.ccall('swe_sol_eclipse_where_wrap', 'number', ['number', 'number', 'number', 'number', 'number'], [julianDay, normalizeFlags(flags), geo, attr, serr]);
+      if (type < 0) throw new Error(m.UTF8ToString(serr));
+      const [longitude, latitude] = this._readDoubles(geo, 2);
+      return { type, longitude, latitude, attributes: solarEclipseAttributes(this._readDoubles(attr, 20)) };
+    });
+  }
+
+  /**
+   * How a solar eclipse looks from a place at a given moment
+   *
+   * @returns type 0 when the Sun is not eclipsed there and then
+   */
+  solarEclipseHow(
+    julianDay: number,
+    place: GeoPosition,
+    flags: CalculationFlagInput = CalculationFlag.MoshierEphemeris
+  ): { type: number; attributes: SolarEclipseAttributes } {
+    this._checkReady();
+    const m = this.module!;
+    return this._withDoubles([3, 20], ([geo, attr], serr) => {
+      this._place(geo, place);
+      const type = m.ccall('swe_sol_eclipse_how_wrap', 'number', ['number', 'number', 'number', 'number', 'number'], [julianDay, normalizeFlags(flags), geo, attr, serr]);
+      if (type < 0) throw new Error(m.UTF8ToString(serr));
+      return { type, attributes: solarEclipseAttributes(this._readDoubles(attr, 20)) };
+    });
+  }
+
+  /**
+   * Find the next solar eclipse visible from a place
+   *
+   * @example
+   * // The 2027 eclipse from Luxor
+   * const e = swe.findNextSolarEclipseAt(swe.julianDay(2027, 7, 1), { longitude: 32.64, latitude: 25.69 });
+   * console.log(e.isTotal(), e.centralDuration()); // true, ~381 s
+   */
+  findNextSolarEclipseAt(
+    startJulianDay: number,
+    place: GeoPosition,
+    flags: CalculationFlagInput = CalculationFlag.MoshierEphemeris,
+    backward: boolean = false
+  ): LocalSolarEclipse {
+    this._checkReady();
+    const m = this.module!;
+    return this._withDoubles([3, 10, 20], ([geo, tret, attr], serr) => {
+      this._place(geo, place);
+      const type = m.ccall(
+        'swe_sol_eclipse_when_loc_wrap',
+        'number',
+        ['number', 'number', 'number', 'number', 'number', 'number', 'number'],
+        [startJulianDay, normalizeFlags(flags), geo, tret, attr, backward ? 1 : 0, serr]
+      );
+      if (type < 0) throw new Error(m.UTF8ToString(serr));
+      return localSolarEclipse(type, this._readDoubles(tret, 10), this._readDoubles(attr, 20));
+    });
+  }
+
+  /**
+   * How a lunar eclipse looks at a moment; with a place, also where the Moon stands in its sky
+   */
+  lunarEclipseHow(
+    julianDay: number,
+    place?: GeoPosition,
+    flags: CalculationFlagInput = CalculationFlag.MoshierEphemeris
+  ): { type: number; attributes: LunarEclipseAttributes } {
+    this._checkReady();
+    const m = this.module!;
+    return this._withDoubles([3, 20], ([geo, attr], serr) => {
+      this._place(geo, place);
+      const type = m.ccall('swe_lun_eclipse_how_wrap', 'number', ['number', 'number', 'number', 'number', 'number'], [julianDay, normalizeFlags(flags), geo, attr, serr]);
+      if (type < 0) throw new Error(m.UTF8ToString(serr));
+      return { type, attributes: lunarEclipseAttributes(this._readDoubles(attr, 20)) };
+    });
+  }
+
+  /**
+   * Find the next lunar eclipse visible from a place
+   */
+  findNextLunarEclipseAt(
+    startJulianDay: number,
+    place: GeoPosition,
+    flags: CalculationFlagInput = CalculationFlag.MoshierEphemeris,
+    backward: boolean = false
+  ): LocalLunarEclipse {
+    this._checkReady();
+    const m = this.module!;
+    return this._withDoubles([3, 10, 20], ([geo, tret, attr], serr) => {
+      this._place(geo, place);
+      const type = m.ccall(
+        'swe_lun_eclipse_when_loc_wrap',
+        'number',
+        ['number', 'number', 'number', 'number', 'number', 'number', 'number'],
+        [startJulianDay, normalizeFlags(flags), geo, tret, attr, backward ? 1 : 0, serr]
+      );
+      if (type < 0) throw new Error(m.UTF8ToString(serr));
+      return localLunarEclipse(type, this._readDoubles(tret, 10), this._readDoubles(attr, 20));
+    });
+  }
+
+  /**
+   * Turn ecliptic or equatorial coordinates into azimuth and altitude for a place
+   *
+   * @param coordinates - [longitude or right ascension, latitude or declination, distance] in degrees and AU
+   * @param equatorial - true if the coordinates are right ascension and declination
+   * @param pressure - atmospheric pressure in mbar for refraction (0 estimates it from the altitude)
+   * @param temperature - in °C, for refraction
+   */
+  horizontalCoordinates(
+    julianDay: number,
+    place: GeoPosition,
+    coordinates: [number, number, number],
+    equatorial: boolean = false,
+    pressure: number = 0,
+    temperature: number = 10
+  ): HorizontalCoordinates {
+    this._checkReady();
+    const m = this.module!;
+    return this._withDoubles([3, 3, 3], ([geo, xin, xaz]) => {
+      this._place(geo, place);
+      this._writeDoubles(xin, coordinates);
+      m.ccall(
+        'swe_azalt_wrap',
+        null,
+        ['number', 'number', 'number', 'number', 'number', 'number', 'number'],
+        [julianDay, equatorial ? 1 : 0, geo, pressure, temperature, xin, xaz]
+      );
+      const [az, altitude, apparentAltitude] = this._readDoubles(xaz, 3);
+      return { azimuth: compassBearing(az), altitude, apparentAltitude };
+    });
+  }
+
+  /**
+   * Greenwich apparent sidereal time, in hours
+   */
+  siderealTime(julianDay: number): number {
+    this._checkReady();
+    return this.module!.ccall('swe_sidtime_wrap', 'number', ['number'], [julianDay]);
   }
 
   /**

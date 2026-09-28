@@ -270,6 +270,25 @@ export enum EclipseType {
 }
 
 /**
+ * Visibility flags returned alongside the EclipseType flags by the local eclipse functions
+ * (SE_ECL_VISIBLE and friends in the Swiss Ephemeris)
+ */
+export enum EclipseVisibility {
+  /** The eclipse is visible from the place at some point */
+  Visible = 128,
+  /** Its maximum is visible */
+  MaxVisible = 256,
+  /** First contact is visible (solar), or the partial phase begins visibly (lunar) */
+  FirstContactVisible = 512,
+  /** Second contact is visible (solar), or totality begins visibly (lunar) */
+  SecondContactVisible = 1024,
+  /** Third contact is visible (solar), or totality ends visibly (lunar) */
+  ThirdContactVisible = 2048,
+  /** Fourth contact is visible (solar), or the partial phase ends visibly (lunar) */
+  FourthContactVisible = 4096,
+}
+
+/**
  * Common eclipse type combinations
  */
 export const CommonEclipseTypes = {

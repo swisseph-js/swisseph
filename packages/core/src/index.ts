@@ -16,6 +16,7 @@ export {
   HousePoint,
   CalculationFlag,
   EclipseType,
+  EclipseVisibility,
   SiderealMode,
   RiseTransitFlag,
   CommonCalculationFlags,
@@ -53,3 +54,15 @@ export {
 
 // Export flag input types
 export type { CalculationFlagInput, EclipseTypeFlagInput } from './flags.js';
+
+// Local eclipse circumstances and horizontal coordinates
+export type {
+  GeoPosition,
+  SolarEclipseAttributes,
+  SolarEclipseWhere,
+  LocalSolarEclipse,
+  LunarEclipseAttributes,
+  LocalLunarEclipse,
+  HorizontalCoordinates,
+} from './local.js';
+export { compassBearing, solarEclipseAttributes, lunarEclipseAttributes, localSolarEclipse, localLunarEclipse } from './local.js';

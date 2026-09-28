@@ -5,17 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2026-09-28
+
+### Added
+
+- Local eclipse circumstances in `@swisseph/node` and `@swisseph/browser`: `solarEclipseWhere()`, `solarEclipseHow()`, `findNextSolarEclipseAt()`, `lunarEclipseHow()` and `findNextLunarEclipseAt()`, plus `horizontalCoordinates()` (`swe_azalt`) and `siderealTime()` (`swe_sidtime`). Azimuths are returned as compass bearings.
+- `setTopocentric()` in `@swisseph/browser`.
+- `@swisseph/core` holds the shared types (`GeoPosition`, `SolarEclipseWhere`, `LocalSolarEclipse`, `LocalLunarEclipse`, `HorizontalCoordinates` and their attributes), the `EclipseVisibility` flags, and the readers both packages use to fill them.
+- Tests for the 2 August 2027 and 31 December 2028 eclipses against pyswisseph (`packages/node/tests/eclipses.test.ts`, `packages/browser/test/eclipses.html`).
 
 ### Fixed
 
-- `findNextSolarEclipse()` and `findNextLunarEclipse()` read their contact times from the wrong slots of `tret` (off by one: the solar `partialBegin` was the moment of local apparent noon, and the lunar `partialBegin` was always 0). They now follow the Swiss Ephemeris layout.
+- `findNextSolarEclipse()` and `findNextLunarEclipse()` (node and browser) read their contact times from the wrong slots of `tret` (off by one: the solar `partialBegin` was the moment of local apparent noon, and the lunar `partialBegin` was always 0). They now follow the Swiss Ephemeris layout.
+
+## [1.3.1] - 2026-07-21
+
+### Fixed
 
 - Fixed npm installation of `@swisseph/node` and `@swisseph/browser` by publishing pnpm-packed tarballs with concrete `@swisseph/core` dependency versions.
 
 ### Added
-
-- Local eclipse circumstances in `@swisseph/node`: `solarEclipseWhere()`, `solarEclipseHow()`, `findNextSolarEclipseAt()`, `lunarEclipseHow()` and `findNextLunarEclipseAt()`, plus `horizontalCoordinates()` (`swe_azalt`) and `siderealTime()` (`swe_sidtime`). Azimuths are returned as compass bearings.
 
 - Added `getAyanamsaExUt()` to `@swisseph/node`, exposing `swe_get_ayanamsa_ex_ut` with explicit calculation flags and native error propagation.
 - Added compatible `setSiderealMode()`, `getAyanamsa()`, and `getAyanamsaExUt()` methods to `@swisseph/browser`.

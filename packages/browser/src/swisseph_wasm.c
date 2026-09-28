@@ -62,6 +62,48 @@ int swe_get_ayanamsa_ex_ut_wrap(double tjd_ut, int iflag, double *daya, char *se
 }
 
 EMSCRIPTEN_KEEPALIVE
+void swe_set_topo_wrap(double geolon, double geolat, double geoalt) {
+    swe_set_topo(geolon, geolat, geoalt);
+}
+
+// Local eclipse circumstances. geopos is [lon, lat, alt]; tret has 10 slots, attr 20.
+
+EMSCRIPTEN_KEEPALIVE
+int swe_sol_eclipse_where_wrap(double tjd_ut, int ifl, double *geopos, double *attr, char *serr) {
+    return swe_sol_eclipse_where(tjd_ut, ifl, geopos, attr, serr);
+}
+
+EMSCRIPTEN_KEEPALIVE
+int swe_sol_eclipse_how_wrap(double tjd_ut, int ifl, double *geopos, double *attr, char *serr) {
+    return swe_sol_eclipse_how(tjd_ut, ifl, geopos, attr, serr);
+}
+
+EMSCRIPTEN_KEEPALIVE
+int swe_sol_eclipse_when_loc_wrap(double tjd_start, int ifl, double *geopos, double *tret, double *attr, int backward, char *serr) {
+    return swe_sol_eclipse_when_loc(tjd_start, ifl, geopos, tret, attr, backward, serr);
+}
+
+EMSCRIPTEN_KEEPALIVE
+int swe_lun_eclipse_how_wrap(double tjd_ut, int ifl, double *geopos, double *attr, char *serr) {
+    return swe_lun_eclipse_how(tjd_ut, ifl, geopos, attr, serr);
+}
+
+EMSCRIPTEN_KEEPALIVE
+int swe_lun_eclipse_when_loc_wrap(double tjd_start, int ifl, double *geopos, double *tret, double *attr, int backward, char *serr) {
+    return swe_lun_eclipse_when_loc(tjd_start, ifl, geopos, tret, attr, backward, serr);
+}
+
+EMSCRIPTEN_KEEPALIVE
+void swe_azalt_wrap(double tjd_ut, int calc_flag, double *geopos, double atpress, double attemp, double *xin, double *xaz) {
+    swe_azalt(tjd_ut, calc_flag, geopos, atpress, attemp, xin, xaz);
+}
+
+EMSCRIPTEN_KEEPALIVE
+double swe_sidtime_wrap(double tjd_ut) {
+    return swe_sidtime(tjd_ut);
+}
+
+EMSCRIPTEN_KEEPALIVE
 void swe_close_wrap(void) {
     swe_close();
 }

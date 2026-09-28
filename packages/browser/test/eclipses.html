@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>@swisseph/browser – local eclipse circumstances</title>
+<style>body { font: 15px/1.5 system-ui, sans-serif; margin: 2rem; } .pass { color: #1a7f37; } .fail { color: #c62828; } pre { background: #f6f8fa; padding: 1rem; }</style>
+</head>
+<body>
+<h1>Local eclipse circumstances</h1>
+<p>The total solar eclipse of 2 August 2027 and the total lunar eclipse of 31 December 2028, with the built-in Moshier ephemeris. Expected values come from pyswisseph 2.10.03 (Swiss Ephemeris files), so the tolerances allow for Moshier.</p>
+<ul id="results"></ul>
+<pre id="out"></pre>
+<script type="module">
+import { SwissEphemeris, EclipseVisibility } from '../dist/swisseph-browser.js';
+
+const swe = new SwissEphemeris();
+await swe.init();
+const results = [];
+const check = (name, ok, got) => results.push({ name, ok: !!ok, got });
+const hours = (jd) => swe.julianDayToDate(jd).hour;
+const LUXOR = { longitude: 32.639, latitude: 25.687 };
+const LONDON = { longitude: -0.128, latitude: 51.507 };
+
+try {
+  const g = swe.findNextSolarEclipse(swe.julianDay(2027, 7, 1));
+  check('solar: total', g.isTotal(), g.type);
+  check('solar: maximum 10:06:41 UTC', Math.abs(hours(g.maximum) - 10.1115) < 0.002, hours(g.maximum));
+  check('solar: partial begins 07:30 UTC', Math.abs(hours(g.partialBegin) - 7.5054) < 0.002, hours(g.partialBegin));
+  check('solar: centre line begins 08:25 UTC', Math.abs(hours(g.centerLineBegin) - 8.4192) < 0.002, hours(g.centerLineBegin));
+
+  const w = swe.solarEclipseWhere(g.maximum);
+  check('where: 33.17°E 25.49°N', Math.abs(w.longitude - 33.168) < 0.05 && Math.abs(w.latitude - 25.493) < 0.05, [w.longitude, w.latitude]);
+  check('where: Saros 136, member 38', w.attributes.sarosSeries === 136 && w.attributes.sarosMember === 38, [w.attributes.sarosSeries, w.attributes.sarosMember]);
+
+  const l = swe.findNextSolarEclipseAt(swe.julianDay(2027, 7, 1), LUXOR);
+  check('Luxor: total and visible', l.isTotal() && l.isVisible() && (l.type & EclipseVisibility.MaxVisible), l.type);
+  check('Luxor: ~380.6 s of totality', Math.abs(l.centralDuration() - 380.6) < 2, l.centralDuration());
+  check('Luxor: Sun at compass ~196°, ~81.8° up', Math.abs(l.attributes.sunAzimuth - 196.1) < 1 && Math.abs(l.attributes.sunAltitude - 81.77) < 0.3, [l.attributes.sunAzimuth, l.attributes.sunAltitude]);
+
+  const lo = swe.findNextSolarEclipseAt(swe.julianDay(2027, 7, 1), LONDON);
+  check('London: partial, ~42% covered', !lo.isTotal() && Math.abs(lo.attributes.obscuration - 0.419) < 0.01, lo.attributes.obscuration);
+  const how = swe.solarEclipseHow(lo.maximum, LONDON);
+  check('London: how() agrees', how.type > 0 && Math.abs(how.attributes.obscuration - 0.419) < 0.01, how.attributes.obscuration);
+
+  const ny = swe.findNextSolarEclipseAt(swe.julianDay(2027, 7, 1), { longitude: -74.006, latitude: 40.713 });
+  check('New York: next seen eclipse is a later one', ny.maximum > g.maximum + 30, ny.maximum);
+
+  const lun = swe.findNextLunarEclipse(swe.julianDay(2028, 12, 1));
+  const order = [lun.penumbralBegin, lun.partialBegin, lun.totalBegin, lun.maximum, lun.totalEnd, lun.partialEnd, lun.penumbralEnd];
+  check('lunar: phases in order', lun.isTotal() && order.every((t, i) => i === 0 || t > order[i - 1]), order.map(hours));
+  const tokyo = swe.findNextLunarEclipseAt(swe.julianDay(2028, 12, 1), { longitude: 139.69, latitude: 35.69 });
+  check('Tokyo: sees it', tokyo.isVisible() && swe.julianDayToDate(tokyo.maximum).day === 31, tokyo.type);
+  const lh = swe.lunarEclipseHow(lun.maximum);
+  check('lunar: umbral magnitude ~1.246', Math.abs(lh.attributes.umbralMagnitude - 1.246) < 0.01, lh.attributes.umbralMagnitude);
+
+  const sun = swe.calculatePosition(g.maximum, 0);
+  const h = swe.horizontalCoordinates(g.maximum, LUXOR, [sun.longitude, sun.latitude, sun.distance]);
+  check('horizontal: Sun over 80° at Luxor', h.altitude > 80 && h.apparentAltitude >= h.altitude, h);
+  const st = swe.siderealTime(swe.julianDay(2027, 8, 2, 10));
+  check('sidereal time in hours', st >= 0 && st < 24, st);
+} catch (e) {
+  check('no exceptions', false, String(e));
+}
+
+document.getElementById('results').innerHTML = results.map((r) => `<li class="${r.ok ? 'pass' : 'fail'}">${r.ok ? '✓' : '✗'} ${r.name}</li>`).join('');
+document.getElementById('out').textContent = JSON.stringify({ passed: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok) }, null, 2);
+document.body.dataset.done = '1';
+</script>
+</body>
+</html>

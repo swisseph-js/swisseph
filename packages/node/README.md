@@ -116,6 +116,20 @@ findNextSolarEclipse(startJd, flags?, eclipseType?, backward?)
 // Returns eclipse object with methods: isTotal(), isPartial(), getTotalityDuration(), etc.
 ```
 
+Local circumstances (azimuths are compass bearings: 0° north, 90° east):
+
+```typescript
+solarEclipseWhere(jd, flags?)                          // central line (or greatest point) at a moment
+solarEclipseHow(jd, { longitude, latitude }, flags?)   // magnitude, obscuration, Sun's place, Saros
+findNextSolarEclipseAt(startJd, place, flags?, backward?)
+// Returns contacts (firstContact … fourthContact), sunrise/sunset during it, attributes,
+// and isTotal(), isVisible(), centralDuration() (seconds of totality or annularity)
+lunarEclipseHow(jd, place?, flags?)
+findNextLunarEclipseAt(startJd, place, flags?, backward?)
+horizontalCoordinates(jd, place, [lon, lat, dist], equatorial?)  // azimuth and altitude
+siderealTime(jd)                                        // Greenwich apparent sidereal time, hours
+```
+
 ### Sidereal Calculations
 
 ```typescript

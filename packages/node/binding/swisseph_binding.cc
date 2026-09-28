@@ -384,6 +384,144 @@ Napi::Value GetAyanamsaExUt(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, daya);
 }
 
+// ─── Local eclipse circumstances ───────────────────────────────────────────
+
+static Napi::Array DoubleArray(Napi::Env env, const double* v, int n) {
+  Napi::Array a = Napi::Array::New(env, n);
+  for (int i = 0; i < n; i++) a[i] = Napi::Number::New(env, v[i]);
+  return a;
+}
+
+static bool NeedArgs(const Napi::CallbackInfo& info, size_t n, const char* msg) {
+  if (info.Length() < n) {
+    Napi::TypeError::New(info.Env(), msg).ThrowAsJavaScriptException();
+    return false;
+  }
+  return true;
+}
+
+// Wrapper for swe_sol_eclipse_where: where the eclipse is central (or greatest) at a moment
+// Args: tjd_ut, ifl → [ret, geopos[10], attr[20]]
+Napi::Value SolEclipseWhere(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 1, "Expected tjd_ut, [ifl]")) return env.Undefined();
+  double tjd = info[0].As<Napi::Number>().DoubleValue();
+  int32 ifl = info.Length() >= 2 ? info[1].As<Napi::Number>().Int32Value() : SEFLG_SWIEPH;
+  double geopos[10] = {0}, attr[20] = {0};
+  char serr[256] = {0};
+  int32 ret = swe_sol_eclipse_where(tjd, ifl, geopos, attr, serr);
+  if (ret < 0) { Napi::Error::New(env, serr).ThrowAsJavaScriptException(); return env.Undefined(); }
+  Napi::Array result = Napi::Array::New(env, 3);
+  result[0u] = Napi::Number::New(env, ret);
+  result[1u] = DoubleArray(env, geopos, 10);
+  result[2u] = DoubleArray(env, attr, 20);
+  return result;
+}
+
+// Wrapper for swe_sol_eclipse_how: the eclipse seen from a place at a moment
+// Args: tjd_ut, ifl, geolon, geolat, geoalt → [ret, attr[20]]
+Napi::Value SolEclipseHow(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 4, "Expected tjd_ut, ifl, geolon, geolat, [geoalt]")) return env.Undefined();
+  double tjd = info[0].As<Napi::Number>().DoubleValue();
+  int32 ifl = info[1].As<Napi::Number>().Int32Value();
+  double geopos[3] = {info[2].As<Napi::Number>().DoubleValue(), info[3].As<Napi::Number>().DoubleValue(),
+                      info.Length() >= 5 ? info[4].As<Napi::Number>().DoubleValue() : 0};
+  double attr[20] = {0};
+  char serr[256] = {0};
+  int32 ret = swe_sol_eclipse_how(tjd, ifl, geopos, attr, serr);
+  if (ret < 0) { Napi::Error::New(env, serr).ThrowAsJavaScriptException(); return env.Undefined(); }
+  Napi::Array result = Napi::Array::New(env, 2);
+  result[0u] = Napi::Number::New(env, ret);
+  result[1u] = DoubleArray(env, attr, 20);
+  return result;
+}
+
+// Wrapper for swe_sol_eclipse_when_loc: the next solar eclipse seen from a place
+// Args: tjd_start, ifl, geolon, geolat, geoalt, backward → [ret, tret[10], attr[20]]
+Napi::Value SolEclipseWhenLoc(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 4, "Expected tjd_start, ifl, geolon, geolat, [geoalt], [backward]")) return env.Undefined();
+  double tjd = info[0].As<Napi::Number>().DoubleValue();
+  int32 ifl = info[1].As<Napi::Number>().Int32Value();
+  double geopos[3] = {info[2].As<Napi::Number>().DoubleValue(), info[3].As<Napi::Number>().DoubleValue(),
+                      info.Length() >= 5 ? info[4].As<Napi::Number>().DoubleValue() : 0};
+  int32 backward = info.Length() >= 6 ? info[5].As<Napi::Number>().Int32Value() : 0;
+  double tret[10] = {0}, attr[20] = {0};
+  char serr[256] = {0};
+  int32 ret = swe_sol_eclipse_when_loc(tjd, ifl, geopos, tret, attr, backward, serr);
+  if (ret < 0) { Napi::Error::New(env, serr).ThrowAsJavaScriptException(); return env.Undefined(); }
+  Napi::Array result = Napi::Array::New(env, 3);
+  result[0u] = Napi::Number::New(env, ret);
+  result[1u] = DoubleArray(env, tret, 10);
+  result[2u] = DoubleArray(env, attr, 20);
+  return result;
+}
+
+// Wrapper for swe_lun_eclipse_how: the lunar eclipse at a moment (and the Moon's place in the sky)
+// Args: tjd_ut, ifl, geolon, geolat, geoalt → [ret, attr[20]]
+Napi::Value LunEclipseHow(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 2, "Expected tjd_ut, ifl, [geolon, geolat, geoalt]")) return env.Undefined();
+  double tjd = info[0].As<Napi::Number>().DoubleValue();
+  int32 ifl = info[1].As<Napi::Number>().Int32Value();
+  double geopos[3] = {info.Length() >= 3 ? info[2].As<Napi::Number>().DoubleValue() : 0,
+                      info.Length() >= 4 ? info[3].As<Napi::Number>().DoubleValue() : 0,
+                      info.Length() >= 5 ? info[4].As<Napi::Number>().DoubleValue() : 0};
+  double attr[20] = {0};
+  char serr[256] = {0};
+  int32 ret = swe_lun_eclipse_how(tjd, ifl, geopos, attr, serr);
+  if (ret < 0) { Napi::Error::New(env, serr).ThrowAsJavaScriptException(); return env.Undefined(); }
+  Napi::Array result = Napi::Array::New(env, 2);
+  result[0u] = Napi::Number::New(env, ret);
+  result[1u] = DoubleArray(env, attr, 20);
+  return result;
+}
+
+// Wrapper for swe_lun_eclipse_when_loc: the next lunar eclipse seen from a place
+// Args: tjd_start, ifl, geolon, geolat, geoalt, backward → [ret, tret[10], attr[20]]
+Napi::Value LunEclipseWhenLoc(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 4, "Expected tjd_start, ifl, geolon, geolat, [geoalt], [backward]")) return env.Undefined();
+  double tjd = info[0].As<Napi::Number>().DoubleValue();
+  int32 ifl = info[1].As<Napi::Number>().Int32Value();
+  double geopos[3] = {info[2].As<Napi::Number>().DoubleValue(), info[3].As<Napi::Number>().DoubleValue(),
+                      info.Length() >= 5 ? info[4].As<Napi::Number>().DoubleValue() : 0};
+  int32 backward = info.Length() >= 6 ? info[5].As<Napi::Number>().Int32Value() : 0;
+  double tret[10] = {0}, attr[20] = {0};
+  char serr[256] = {0};
+  int32 ret = swe_lun_eclipse_when_loc(tjd, ifl, geopos, tret, attr, backward, serr);
+  if (ret < 0) { Napi::Error::New(env, serr).ThrowAsJavaScriptException(); return env.Undefined(); }
+  Napi::Array result = Napi::Array::New(env, 3);
+  result[0u] = Napi::Number::New(env, ret);
+  result[1u] = DoubleArray(env, tret, 10);
+  result[2u] = DoubleArray(env, attr, 20);
+  return result;
+}
+
+// Wrapper for swe_azalt: ecliptic or equatorial coordinates to azimuth and altitude
+// Args: tjd_ut, calc_flag, geolon, geolat, geoalt, atpress, attemp, x0, x1, x2 → [azimuth, true alt, apparent alt]
+Napi::Value Azalt(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 10, "Expected tjd_ut, calc_flag, geolon, geolat, geoalt, atpress, attemp, x0, x1, x2")) return env.Undefined();
+  double tjd = info[0].As<Napi::Number>().DoubleValue();
+  int32 flag = info[1].As<Napi::Number>().Int32Value();
+  double geopos[3] = {info[2].As<Napi::Number>().DoubleValue(), info[3].As<Napi::Number>().DoubleValue(), info[4].As<Napi::Number>().DoubleValue()};
+  double atpress = info[5].As<Napi::Number>().DoubleValue();
+  double attemp = info[6].As<Napi::Number>().DoubleValue();
+  double xin[3] = {info[7].As<Napi::Number>().DoubleValue(), info[8].As<Napi::Number>().DoubleValue(), info[9].As<Napi::Number>().DoubleValue()};
+  double xaz[3] = {0};
+  swe_azalt(tjd, flag, geopos, atpress, attemp, xin, xaz);
+  return DoubleArray(env, xaz, 3);
+}
+
+// Wrapper for swe_sidtime: Greenwich apparent sidereal time, in hours
+Napi::Value Sidtime(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 1, "Expected tjd_ut")) return env.Undefined();
+  return Napi::Number::New(env, swe_sidtime(info[0].As<Napi::Number>().DoubleValue()));
+}
+
 // Initialize the addon
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("set_ephe_path", Napi::Function::New(env, SetEphePath));
@@ -400,6 +538,13 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("get_ayanamsa_ut", Napi::Function::New(env, GetAyanamsaUt));
   exports.Set("get_ayanamsa_ex_ut", Napi::Function::New(env, GetAyanamsaExUt));
   exports.Set("rise_trans", Napi::Function::New(env, RiseTrans));
+  exports.Set("sol_eclipse_where", Napi::Function::New(env, SolEclipseWhere));
+  exports.Set("sol_eclipse_how", Napi::Function::New(env, SolEclipseHow));
+  exports.Set("sol_eclipse_when_loc", Napi::Function::New(env, SolEclipseWhenLoc));
+  exports.Set("lun_eclipse_how", Napi::Function::New(env, LunEclipseHow));
+  exports.Set("lun_eclipse_when_loc", Napi::Function::New(env, LunEclipseWhenLoc));
+  exports.Set("azalt", Napi::Function::New(env, Azalt));
+  exports.Set("sidtime", Napi::Function::New(env, Sidtime));
 
   return exports;
 }

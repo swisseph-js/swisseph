@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `findNextSolarEclipse()` and `findNextLunarEclipse()` read their contact times from the wrong slots of `tret` (off by one: the solar `partialBegin` was the moment of local apparent noon, and the lunar `partialBegin` was always 0). They now follow the Swiss Ephemeris layout.
+
 - Fixed npm installation of `@swisseph/node` and `@swisseph/browser` by publishing pnpm-packed tarballs with concrete `@swisseph/core` dependency versions.
 
 ### Added
+
+- Local eclipse circumstances in `@swisseph/node`: `solarEclipseWhere()`, `solarEclipseHow()`, `findNextSolarEclipseAt()`, `lunarEclipseHow()` and `findNextLunarEclipseAt()`, plus `horizontalCoordinates()` (`swe_azalt`) and `siderealTime()` (`swe_sidtime`). Azimuths are returned as compass bearings.
 
 - Added `getAyanamsaExUt()` to `@swisseph/node`, exposing `swe_get_ayanamsa_ex_ut` with explicit calculation flags and native error propagation.
 - Added compatible `setSiderealMode()`, `getAyanamsa()`, and `getAyanamsaExUt()` methods to `@swisseph/browser`.

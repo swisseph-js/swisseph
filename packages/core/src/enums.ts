@@ -142,6 +142,8 @@ export enum HouseSystem {
   Koch = 'K',
   /** Porphyrius */
   Porphyrius = 'O',
+  /** Sripati (Porphyry sectors with cusps at the middle of each sector) */
+  Sripati = 'S',
   /** Regiomontanus */
   Regiomontanus = 'R',
   /** Campanus */

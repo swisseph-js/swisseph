@@ -228,6 +228,7 @@ enum HouseSystem {
   Placidus = 'P',          // Most common in modern Western astrology
   Koch = 'K',
   Porphyrius = 'O',
+  Sripati = 'S',            // Sripati (Vedic): midpoints of Porphyry cusps
   Regiomontanus = 'R',
   Campanus = 'C',
   Equal = 'A',             // Equal houses from Ascendant

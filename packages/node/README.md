@@ -108,6 +108,15 @@ calculateHouses(jd, latitude, longitude, houseSystem?)
 
 **House systems:** `Placidus`, `Koch`, `Equal`, `WholeSign`, `Campanus`, `Regiomontanus`, etc.
 
+### Rise, Transit and Set
+
+```typescript
+calculateRiseTransitSet(startJd, body, RiseTransitFlag.Rise, longitude, latitude, altitude, flags?, pressure?, temperature?)
+// Returns: { time, eventType } (time is a Julian day in UT)
+```
+
+Event types: `Rise`, `Set`, `UpperTransit` and `LowerTransit` of `RiseTransitFlag`.
+
 ### Eclipses
 
 ```typescript

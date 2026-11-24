@@ -243,6 +243,47 @@ for (let i = 1; i <= 12; i++) {
 
 ---
 
+## Rise, Transit and Set
+
+### calculateRiseTransitSet()
+
+Find the next rise, set or transit of a body at a place.
+
+```typescript
+calculateRiseTransitSet(
+  startJulianDay: number,
+  body: CelestialBody,
+  eventType: number,          // RiseTransitFlag
+  longitude: number,          // east positive
+  latitude: number,           // north positive
+  altitude: number,           // meters above sea level
+  flags?: CalculationFlagInput,   // default: CalculationFlag.SwissEphemeris
+  atmosphericPressure?: number,   // millibars, 0 = standard
+  atmosphericTemperature?: number // Celsius
+): RiseTransitSet
+```
+
+**Returns:** `{ time, eventType }`, the Julian day (UT) of the event.
+
+**Event types:** `RiseTransitFlag.Rise`, `RiseTransitFlag.Set`, `RiseTransitFlag.UpperTransit`, `RiseTransitFlag.LowerTransit`.
+
+**Example:**
+```typescript
+import { Planet, RiseTransitFlag } from '@swisseph/node';
+
+const sunrise = calculateRiseTransitSet(
+  jd,
+  Planet.Sun,
+  RiseTransitFlag.Rise,
+  -74.0060, // New York longitude
+  40.7128,  // New York latitude
+  10
+);
+console.log(julianDayToDate(sunrise.time));
+```
+
+---
+
 ## Eclipse Calculations
 
 ### findNextLunarEclipse()

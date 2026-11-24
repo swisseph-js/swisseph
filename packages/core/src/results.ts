@@ -266,3 +266,27 @@ export interface RiseTransitSet {
   /** Event type (rise, set, or transit) */
   eventType: number;
 }
+
+/**
+ * Position of a planetary node or apsis
+ * Same fields as PlanetaryPosition, without the return flags
+ */
+export type NodeApsidePosition = Omit<PlanetaryPosition, 'flags'>;
+
+/**
+ * Nodes and apsides of a planet's orbit
+ * Result from calculateNodesAndApsides()
+ */
+export interface NodesAndApsides {
+  /** Ascending node */
+  ascendingNode: NodeApsidePosition;
+
+  /** Descending node */
+  descendingNode: NodeApsidePosition;
+
+  /** Perihelion (the point of the orbit closest to the Sun) */
+  perihelion: NodeApsidePosition;
+
+  /** Aphelion (the point farthest from the Sun), or the second focal point with NodApsMethod.FocalPoint */
+  aphelion: NodeApsidePosition;
+}

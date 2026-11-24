@@ -20,6 +20,8 @@ import {
   DateTime,
   ExtendedDateTime,
   RiseTransitSet,
+  NodApsMethod,
+  NodesAndApsides,
   normalizeFlags,
   normalizeEclipseTypes,
   LunarEclipseImpl,
@@ -797,6 +799,62 @@ export function calculateRiseTransitSet(
   return {
     time,
     eventType: retFlag,
+  };
+}
+
+/**
+ * Calculate the nodes and apsides of a planet's orbit
+ *
+ * Returns the ascending and descending nodes, the perihelion and the aphelion
+ * of a planet, as ecliptic positions. With the mean method (planets from Mercury
+ * to Neptune) they are the mean orbital elements; Pluto and the bodies beyond use
+ * osculating elements. For the Moon, the nodes are the lunar nodes and the apsides
+ * are perigee and apogee.
+ *
+ * @param julianDay - Julian day number in Universal Time
+ * @param body - Celestial body
+ * @param method - NodApsMethod, combinable with bitwise OR (default: Mean)
+ * @param flags - Calculation flags (default: SwissEphemeris with speed)
+ * @returns NodesAndApsides object with the four positions
+ *
+ * @example
+ * const pluto = calculateNodesAndApsides(jd, Planet.Pluto);
+ * console.log(`Pluto ascending node: ${pluto.ascendingNode.longitude}°`);
+ *
+ * // Osculating Mars perihelion
+ * const mars = calculateNodesAndApsides(jd, Planet.Mars, NodApsMethod.Osculating);
+ * console.log(mars.perihelion.longitude);
+ */
+export function calculateNodesAndApsides(
+  julianDay: number,
+  body: CelestialBody,
+  method: number = NodApsMethod.Mean,
+  flags: CalculationFlagInput = CommonCalculationFlags.DefaultSwissEphemeris
+): NodesAndApsides {
+  const normalizedFlags = normalizeFlags(flags);
+  ensureEphemerisInitialized(normalizedFlags);
+
+  const [asc, desc, peri, aphe] = binding.nod_aps_ut(
+    julianDay,
+    body,
+    normalizedFlags,
+    method
+  ) as number[][];
+
+  const position = (xx: number[]) => ({
+    longitude: xx[0],
+    latitude: xx[1],
+    distance: xx[2],
+    longitudeSpeed: xx[3],
+    latitudeSpeed: xx[4],
+    distanceSpeed: xx[5],
+  });
+
+  return {
+    ascendingNode: position(asc),
+    descendingNode: position(desc),
+    perihelion: position(peri),
+    aphelion: position(aphe),
   };
 }
 

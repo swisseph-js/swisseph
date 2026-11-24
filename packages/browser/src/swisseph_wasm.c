@@ -110,6 +110,12 @@ int swe_rise_trans_wrap(double tjd_ut, int ipl, int epheflag, int rsmi, double *
     return swe_rise_trans(tjd_ut, ipl, NULL, epheflag, rsmi, geopos, atpress, attemp, tret, serr);
 }
 
+// Nodes and apsides. Each of the four output arrays holds 6 doubles.
+EMSCRIPTEN_KEEPALIVE
+int swe_nod_aps_ut_wrap(double tjd_ut, int ipl, int iflag, int method, double *xnasc, double *xndsc, double *xperi, double *xaphe, char *serr) {
+    return swe_nod_aps_ut(tjd_ut, ipl, iflag, method, xnasc, xndsc, xperi, xaphe, serr);
+}
+
 EMSCRIPTEN_KEEPALIVE
 void swe_close_wrap(void) {
     swe_close();

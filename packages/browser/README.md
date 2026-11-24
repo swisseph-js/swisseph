@@ -107,6 +107,15 @@ swe.calculateHouses(jd, latitude, longitude, houseSystem?)
 
 **House systems:** `Placidus`, `Koch`, `Equal`, `WholeSign`, `Campanus`, `Regiomontanus`, etc.
 
+### Nodes and Apsides
+
+```typescript
+swe.calculateNodesAndApsides(jd, body, method?, flags?)
+// Returns: { ascendingNode, descendingNode, perihelion, aphelion }, each with longitude, latitude, distance and speeds
+```
+
+Methods (`NodApsMethod`): `Mean` (default), `Osculating`, `OsculatingBarycentric`, `FocalPoint` (combine with `|`).
+
 ### Rise, Transit and Set
 
 ```typescript

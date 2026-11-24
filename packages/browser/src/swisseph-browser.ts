@@ -21,6 +21,8 @@ import {
   DateTime,
   ExtendedDateTime,
   RiseTransitSet,
+  NodApsMethod,
+  NodesAndApsides,
   normalizeFlags,
   normalizeEclipseTypes,
   LunarEclipseImpl,
@@ -1029,6 +1031,63 @@ export class SwissEphemeris {
       );
       if (retflag < 0) throw new Error(m.UTF8ToString(serr));
       return { time: this._readDoubles(tret, 1)[0], eventType: retflag };
+    });
+  }
+
+  /**
+   * Calculate the nodes and apsides of a planet's orbit
+   *
+   * Same signature and result as `calculateNodesAndApsides()` in `@swisseph/node`.
+   * With the mean method (Mercury to Neptune) they are the mean orbital elements;
+   * Pluto and the bodies beyond use osculating elements.
+   *
+   * @param julianDay - Julian day number in Universal Time
+   * @param body - Celestial body
+   * @param method - NodApsMethod, combinable with bitwise OR (default: Mean)
+   * @param flags - Calculation flags (default: Moshier with speed)
+   * @returns NodesAndApsides object with the four positions
+   *
+   * @example
+   * const pluto = swe.calculateNodesAndApsides(jd, Planet.Pluto);
+   * console.log(`Pluto ascending node: ${pluto.ascendingNode.longitude}°`);
+   */
+  calculateNodesAndApsides(
+    julianDay: number,
+    body: CelestialBody,
+    method: number = NodApsMethod.Mean,
+    flags: CalculationFlagInput = CommonCalculationFlags.DefaultMoshier
+  ): NodesAndApsides {
+    this._checkReady();
+
+    const normalizedFlags = normalizeFlags(flags);
+    const m = this.module!;
+    return this._withDoubles([6, 6, 6, 6], ([asc, desc, peri, aphe], serr) => {
+      const retflag = m.ccall(
+        'swe_nod_aps_ut_wrap',
+        'number',
+        ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
+        [julianDay, body, normalizedFlags, method, asc, desc, peri, aphe, serr]
+      );
+      if (retflag < 0) throw new Error(m.UTF8ToString(serr));
+
+      const position = (ptr: number) => {
+        const xx = this._readDoubles(ptr, 6);
+        return {
+          longitude: xx[0],
+          latitude: xx[1],
+          distance: xx[2],
+          longitudeSpeed: xx[3],
+          latitudeSpeed: xx[4],
+          distanceSpeed: xx[5],
+        };
+      };
+
+      return {
+        ascendingNode: position(asc),
+        descendingNode: position(desc),
+        perihelion: position(peri),
+        aphelion: position(aphe),
+      };
     });
   }
 

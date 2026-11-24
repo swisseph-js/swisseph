@@ -368,6 +368,46 @@ const equal = swe.calculateHouses(jd, 40.7128, -74.0060, HouseSystem.Equal);
 
 ---
 
+## Nodes and Apsides
+
+### calculateNodesAndApsides()
+
+Calculate the ascending and descending nodes, the perihelion and the aphelion of a body's orbit.
+
+```typescript
+swe.calculateNodesAndApsides(
+  julianDay: number,
+  body: CelestialBody,
+  method?: number,                // NodApsMethod, combinable with |; default: Mean
+  flags?: CalculationFlagInput    // default: CalculationFlag.MoshierEphemeris with speed
+): NodesAndApsides
+```
+
+**Returns:** `{ ascendingNode, descendingNode, perihelion, aphelion }`. Each is `{ longitude, latitude, distance, longitudeSpeed, latitudeSpeed, distanceSpeed }`, the same fields as `PlanetaryPosition` without `flags`.
+
+**Methods:**
+- `NodApsMethod.Mean` - mean nodes and apsides (Mercury to Neptune; Pluto and beyond use osculating elements)
+- `NodApsMethod.Osculating` - osculating nodes and apsides
+- `NodApsMethod.OsculatingBarycentric` - osculating, relative to the solar system barycenter
+- `NodApsMethod.FocalPoint` - the second focal point of the orbit instead of the aphelion (combine with `|`)
+
+Positions are geocentric unless `CalculationFlag.Heliocentric` is passed; only the heliocentric nodes are exactly 180° apart.
+
+**Example:**
+```typescript
+import { Planet, NodApsMethod, CalculationFlag } from '@swisseph/browser';
+
+const pluto = swe.calculateNodesAndApsides(
+  jd,
+  Planet.Pluto,
+  NodApsMethod.Mean,
+  CalculationFlag.SwissEphemeris | CalculationFlag.Speed | CalculationFlag.Heliocentric
+);
+console.log(pluto.ascendingNode.longitude); // ~110.3° at J2000
+```
+
+---
+
 ## Rise, Transit and Set
 
 ### calculateRiseTransitSet()

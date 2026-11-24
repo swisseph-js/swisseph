@@ -117,7 +117,7 @@
     <div id="test-results"></div>
 
     <script type="module">
-        import { SwissEphemeris, Planet, Asteroid, CalendarType, CalculationFlag, HouseSystem, SiderealMode, RiseTransitFlag } from '../dist/swisseph-browser.js';
+        import { SwissEphemeris, Planet, Asteroid, CalendarType, CalculationFlag, HouseSystem, SiderealMode, RiseTransitFlag, NodApsMethod } from '../dist/swisseph-browser.js';
 
         // Simple test framework
         class TestRunner {
@@ -511,6 +511,32 @@
 
                     expect(noon).toBeGreaterThan(sunrise);
                     expect(noon).toBeLessThan(sunset);
+                });
+            });
+
+            runner.describe('calculateNodesAndApsides', () => {
+                const jd = swe.julianDay(2000, 1, 1, 12);
+                const heliocentric = CalculationFlag.MoshierEphemeris | CalculationFlag.Speed | CalculationFlag.Heliocentric;
+
+                runner.test('should put the Pluto ascending node near 110.3 degrees at J2000', () => {
+                    const pluto = swe.calculateNodesAndApsides(jd, Planet.Pluto, NodApsMethod.Mean, heliocentric);
+
+                    expect(pluto.ascendingNode.longitude).toBeGreaterThan(110.2);
+                    expect(pluto.ascendingNode.longitude).toBeLessThan(110.4);
+                });
+
+                runner.test('should put the descending node opposite the ascending node (heliocentric)', () => {
+                    const mars = swe.calculateNodesAndApsides(jd, Planet.Mars, NodApsMethod.Mean, heliocentric);
+                    const difference = ((mars.descendingNode.longitude - mars.ascendingNode.longitude - 180 + 540) % 360) - 180;
+
+                    expect(Math.abs(difference)).toBeLessThan(1e-3);
+                });
+
+                runner.test('should return the lunar nodes for the Moon', () => {
+                    const moon = swe.calculateNodesAndApsides(jd, Planet.Moon);
+
+                    expect(moon.ascendingNode.longitude).toBeGreaterThan(124.9);
+                    expect(moon.ascendingNode.longitude).toBeLessThan(125.2);
                 });
             });
 

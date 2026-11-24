@@ -19,6 +19,7 @@ export {
   EclipseVisibility,
   SiderealMode,
   RiseTransitFlag,
+  NodApsMethod,
   CommonCalculationFlags,
   CommonEclipseTypes,
   AsteroidOffset,
@@ -39,6 +40,8 @@ export type {
   LunarEclipse,
   SolarEclipse,
   RiseTransitSet,
+  NodeApsidePosition,
+  NodesAndApsides,
 } from './results.js';
 
 // Export implementation classes

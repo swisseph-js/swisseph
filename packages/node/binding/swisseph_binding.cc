@@ -522,6 +522,30 @@ Napi::Value Sidtime(const Napi::CallbackInfo& info) {
   return Napi::Number::New(env, swe_sidtime(info[0].As<Napi::Number>().DoubleValue()));
 }
 
+// Wrapper for swe_nod_aps_ut: nodes and apsides of a planet
+// Args: tjd_ut, ipl, iflag, method → [ascending node, descending node, perihelion, aphelion], each 6 doubles
+Napi::Value NodApsUt(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 4, "Expected tjd_ut, ipl, iflag, method")) return env.Undefined();
+  double tjd_ut = info[0].As<Napi::Number>().DoubleValue();
+  int32 ipl = info[1].As<Napi::Number>().Int32Value();
+  int32 iflag = info[2].As<Napi::Number>().Int32Value();
+  int32 method = info[3].As<Napi::Number>().Int32Value();
+  double xnasc[6] = {0}, xndsc[6] = {0}, xperi[6] = {0}, xaphe[6] = {0};
+  char serr[256] = {0};
+  int32 ret = swe_nod_aps_ut(tjd_ut, ipl, iflag, method, xnasc, xndsc, xperi, xaphe, serr);
+  if (ret < 0) {
+    Napi::Error::New(env, serr).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+  Napi::Array result = Napi::Array::New(env, 4);
+  result[0u] = DoubleArray(env, xnasc, 6);
+  result[1u] = DoubleArray(env, xndsc, 6);
+  result[2u] = DoubleArray(env, xperi, 6);
+  result[3u] = DoubleArray(env, xaphe, 6);
+  return result;
+}
+
 // Initialize the addon
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("set_ephe_path", Napi::Function::New(env, SetEphePath));
@@ -545,6 +569,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("lun_eclipse_when_loc", Napi::Function::New(env, LunEclipseWhenLoc));
   exports.Set("azalt", Napi::Function::New(env, Azalt));
   exports.Set("sidtime", Napi::Function::New(env, Sidtime));
+  exports.Set("nod_aps_ut", Napi::Function::New(env, NodApsUt));
 
   return exports;
 }

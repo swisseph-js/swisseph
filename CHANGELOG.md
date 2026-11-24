@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `HouseSystem.Sripati` (`S`) in `@swisseph/core`, for Vedic Sripati houses (the middle of each Porphyry sector).
 - `calculateRiseTransitSet()` in `@swisseph/browser` (`swe_rise_trans`), with the same signature and `RiseTransitSet` result as `@swisseph/node`.
-- Tests for rise, transit and set times (`packages/node/tests/rise-transit.test.ts`, `packages/browser/test/calculations.html`).
+- `calculateNodesAndApsides()` in `@swisseph/node` and `@swisseph/browser` (`swe_nod_aps_ut`), returning the ascending node, descending node, perihelion and aphelion of a body. `@swisseph/core` adds the `NodApsMethod` enum (mean, osculating, osculating barycentric, focal point) and the `NodesAndApsides` and `NodeApsidePosition` types.
+- Tests for rise, transit and set times and for nodes and apsides (`packages/node/tests/rise-transit.test.ts`, `packages/node/tests/nodes-apsides.test.ts`, `packages/browser/test/calculations.html`).
 
 ## [1.4.0] - 2026-09-28
 

@@ -403,6 +403,22 @@ export enum RiseTransitFlag {
 }
 
 /**
+ * Method for planetary nodes and apsides
+ * Used with calculateNodesAndApsides(); values can be combined with bitwise OR
+ * (for example Osculating | FocalPoint)
+ */
+export enum NodApsMethod {
+  /** Mean nodes and apsides (Sun to Neptune; osculating for Pluto and beyond) */
+  Mean = 1,
+  /** Osculating nodes and apsides */
+  Osculating = 2,
+  /** Osculating, with the motion about the solar system barycenter considered */
+  OsculatingBarycentric = 4,
+  /** Second focal point of the orbit instead of the aphelion */
+  FocalPoint = 256
+}
+
+/**
  * Constants for special offsets
  */
 export const AsteroidOffset = 10000;

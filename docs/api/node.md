@@ -235,6 +235,7 @@ for (let i = 1; i <= 12; i++) {
 - `HouseSystem.Campanus` - Campanus
 - `HouseSystem.Regiomontanus` - Regiomontanus
 - `HouseSystem.Porphyrius` - Porphyrius
+- `HouseSystem.Sripati` - Sripati (Vedic; cusps at the middle of each Porphyry sector)
 - `HouseSystem.Meridian` - Axial rotation (Meridian)
 - `HouseSystem.Alcabitus` - Alcabitius
 - `HouseSystem.Morinus` - Morinus
@@ -478,6 +479,7 @@ enum HouseSystem {
   Placidus = 'P',
   Koch = 'K',
   Porphyrius = 'O',
+  Sripati = 'S',
   Regiomontanus = 'R',
   Campanus = 'C',
   Equal = 'A',

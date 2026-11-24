@@ -360,6 +360,7 @@ const equal = swe.calculateHouses(jd, 40.7128, -74.0060, HouseSystem.Equal);
 - `HouseSystem.Campanus` - Campanus
 - `HouseSystem.Regiomontanus` - Regiomontanus
 - `HouseSystem.Porphyrius` - Porphyrius
+- `HouseSystem.Sripati` - Sripati (Vedic; cusps at the middle of each Porphyry sector)
 - `HouseSystem.Meridian` - Axial rotation (Meridian)
 - `HouseSystem.Alcabitus` - Alcabitius
 - `HouseSystem.Morinus` - Morinus
@@ -614,6 +615,7 @@ enum HouseSystem {
   Placidus = 'P',
   Koch = 'K',
   Porphyrius = 'O',
+  Sripati = 'S',
   Regiomontanus = 'R',
   Campanus = 'C',
   Equal = 'A',

@@ -84,6 +84,15 @@ const houses = calculateHouses(jd, lat, lon, HouseSystem.Regiomontanus);
 const houses = calculateHouses(jd, lat, lon, HouseSystem.Porphyrius);
 ```
 
+#### Sripati (HouseSystem.Sripati)
+- Vedic (Jyotish) system
+- Uses the Porphyry sectors, but each cusp is the middle of its sector
+- Unequal houses
+
+```typescript
+const houses = calculateHouses(jd, lat, lon, HouseSystem.Sripati);
+```
+
 #### Meridian/Axial Rotation (HouseSystem.Meridian)
 - Based on Earth's rotation
 - Equal houses in time

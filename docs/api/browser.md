@@ -368,6 +368,47 @@ const equal = swe.calculateHouses(jd, 40.7128, -74.0060, HouseSystem.Equal);
 
 ---
 
+## Rise, Transit and Set
+
+### calculateRiseTransitSet()
+
+Find the next rise, set or transit of a body at a place.
+
+```typescript
+swe.calculateRiseTransitSet(
+  startJulianDay: number,
+  body: CelestialBody,
+  eventType: number,          // RiseTransitFlag
+  longitude: number,          // east positive
+  latitude: number,           // north positive
+  altitude: number,           // meters above sea level
+  flags?: CalculationFlagInput,   // default: CalculationFlag.MoshierEphemeris
+  atmosphericPressure?: number,   // millibars, 0 = standard
+  atmosphericTemperature?: number // Celsius
+): RiseTransitSet
+```
+
+**Returns:** `{ time, eventType }`, the Julian day (UT) of the event.
+
+**Event types:** `RiseTransitFlag.Rise`, `RiseTransitFlag.Set`, `RiseTransitFlag.UpperTransit`, `RiseTransitFlag.LowerTransit`.
+
+**Example:**
+```typescript
+import { Planet, RiseTransitFlag } from '@swisseph/browser';
+
+const sunrise = swe.calculateRiseTransitSet(
+  jd,
+  Planet.Sun,
+  RiseTransitFlag.Rise,
+  -74.0060, // New York longitude
+  40.7128,  // New York latitude
+  10
+);
+console.log(swe.julianDayToDate(sunrise.time));
+```
+
+---
+
 ## Eclipse Calculations
 
 ### findNextLunarEclipse()

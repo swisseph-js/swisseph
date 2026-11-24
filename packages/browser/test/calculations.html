@@ -117,7 +117,7 @@
     <div id="test-results"></div>
 
     <script type="module">
-        import { SwissEphemeris, Planet, Asteroid, CalendarType, CalculationFlag, HouseSystem, SiderealMode } from '../dist/swisseph-browser.js';
+        import { SwissEphemeris, Planet, Asteroid, CalendarType, CalculationFlag, HouseSystem, SiderealMode, RiseTransitFlag } from '../dist/swisseph-browser.js';
 
         // Simple test framework
         class TestRunner {
@@ -478,6 +478,39 @@
                     expect(placidus.cusps[1]).toBeTruthy();
                     expect(koch.cusps[1]).toBeTruthy();
                     expect(wholeSign.cusps[1]).toBeTruthy();
+                });
+            });
+
+            runner.describe('calculateRiseTransitSet', () => {
+                // 2025-01-01 00:00 UTC, New York
+                const place = [-74.0060, 40.7128, 10];
+                const utcHour = (time) => (time + 0.5 - Math.floor(time + 0.5)) * 24;
+
+                runner.test('should find sunrise in New York (about 12:20 UTC)', () => {
+                    const jd = swe.julianDay(2025, 1, 1);
+                    const sunrise = swe.calculateRiseTransitSet(jd, Planet.Sun, RiseTransitFlag.Rise, ...place);
+
+                    expect(sunrise.time).toBeGreaterThan(jd);
+                    expect(utcHour(sunrise.time)).toBeGreaterThan(12.2);
+                    expect(utcHour(sunrise.time)).toBeLessThan(12.5);
+                });
+
+                runner.test('should find sunset in New York (about 21:39 UTC)', () => {
+                    const jd = swe.julianDay(2025, 1, 1);
+                    const sunset = swe.calculateRiseTransitSet(jd, Planet.Sun, RiseTransitFlag.Set, ...place);
+
+                    expect(utcHour(sunset.time)).toBeGreaterThan(21.5);
+                    expect(utcHour(sunset.time)).toBeLessThan(21.8);
+                });
+
+                runner.test('should put the Sun upper transit between sunrise and sunset', () => {
+                    const jd = swe.julianDay(2025, 1, 1);
+                    const sunrise = swe.calculateRiseTransitSet(jd, Planet.Sun, RiseTransitFlag.Rise, ...place).time;
+                    const noon = swe.calculateRiseTransitSet(jd, Planet.Sun, RiseTransitFlag.UpperTransit, ...place).time;
+                    const sunset = swe.calculateRiseTransitSet(jd, Planet.Sun, RiseTransitFlag.Set, ...place).time;
+
+                    expect(noon).toBeGreaterThan(sunrise);
+                    expect(noon).toBeLessThan(sunset);
                 });
             });
 

@@ -103,6 +103,13 @@ double swe_sidtime_wrap(double tjd_ut) {
     return swe_sidtime(tjd_ut);
 }
 
+// Rise, set and transit of a planet or lunar point. geopos is [lon, lat, alt]; tret is one double.
+// The fixed star name is always NULL: stars are not exposed.
+EMSCRIPTEN_KEEPALIVE
+int swe_rise_trans_wrap(double tjd_ut, int ipl, int epheflag, int rsmi, double *geopos, double atpress, double attemp, double *tret, char *serr) {
+    return swe_rise_trans(tjd_ut, ipl, NULL, epheflag, rsmi, geopos, atpress, attemp, tret, serr);
+}
+
 EMSCRIPTEN_KEEPALIVE
 void swe_close_wrap(void) {
     swe_close();

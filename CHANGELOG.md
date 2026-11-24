@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `HouseSystem.Sripati` (`S`) in `@swisseph/core`, for Vedic Sripati houses (the middle of each Porphyry sector).
+- `calculateRiseTransitSet()` in `@swisseph/browser` (`swe_rise_trans`), with the same signature and `RiseTransitSet` result as `@swisseph/node`.
+- Tests for rise, transit and set times (`packages/node/tests/rise-transit.test.ts`, `packages/browser/test/calculations.html`).
 
 ## [1.4.0] - 2026-09-28
 

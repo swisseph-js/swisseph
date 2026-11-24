@@ -20,6 +20,7 @@ import {
   SolarEclipse,
   DateTime,
   ExtendedDateTime,
+  RiseTransitSet,
   normalizeFlags,
   normalizeEclipseTypes,
   LunarEclipseImpl,
@@ -962,6 +963,73 @@ export class SwissEphemeris {
       polarAscendant: ascmc[HousePoint.PolarAscendant],
       houseSystem,
     };
+  }
+
+  /**
+   * Calculate rise, transit, or set time for a celestial body
+   *
+   * Finds the next time after `startJulianDay` when a celestial body rises, sets, or
+   * transits at a place. Same signature and result as `calculateRiseTransitSet()` in
+   * `@swisseph/node`.
+   *
+   * @param startJulianDay - Julian day (UT) to start the search from
+   * @param body - Celestial body to calculate
+   * @param eventType - Type of event (RiseTransitFlag.Rise, Set, UpperTransit, or LowerTransit)
+   * @param longitude - Geographic longitude in degrees (east positive)
+   * @param latitude - Geographic latitude in degrees (north positive)
+   * @param altitude - Altitude above sea level in meters
+   * @param flags - Calculation flags (default: Moshier)
+   * @param atmosphericPressure - Atmospheric pressure in millibars (default: 0 = standard)
+   * @param atmosphericTemperature - Atmospheric temperature in Celsius (default: 0 = standard)
+   * @returns RiseTransitSet object with the time of the event (Julian day, UT)
+   *
+   * @example
+   * const sunrise = swe.calculateRiseTransitSet(
+   *   jd,
+   *   Planet.Sun,
+   *   RiseTransitFlag.Rise,
+   *   -74.0060, // longitude
+   *   40.7128,  // latitude
+   *   10        // altitude in meters
+   * );
+   * console.log(`Sunrise: ${swe.julianDayToDate(sunrise.time)}`);
+   */
+  calculateRiseTransitSet(
+    startJulianDay: number,
+    body: CelestialBody,
+    eventType: number,
+    longitude: number,
+    latitude: number,
+    altitude: number,
+    flags: CalculationFlagInput = CalculationFlag.MoshierEphemeris,
+    atmosphericPressure: number = 0,
+    atmosphericTemperature: number = 0
+  ): RiseTransitSet {
+    this._checkReady();
+
+    const normalizedFlags = normalizeFlags(flags);
+    const m = this.module!;
+    return this._withDoubles([3, 1], ([geo, tret], serr) => {
+      this._writeDoubles(geo, [longitude, latitude, altitude]);
+      const retflag = m.ccall(
+        'swe_rise_trans_wrap',
+        'number',
+        ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'],
+        [
+          startJulianDay,
+          body,
+          normalizedFlags,
+          eventType,
+          geo,
+          atmosphericPressure,
+          atmosphericTemperature,
+          tret,
+          serr,
+        ]
+      );
+      if (retflag < 0) throw new Error(m.UTF8ToString(serr));
+      return { time: this._readDoubles(tret, 1)[0], eventType: retflag };
+    });
   }
 
   /**

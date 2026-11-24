@@ -408,7 +408,7 @@ export enum RiseTransitFlag {
  * (for example Osculating | FocalPoint)
  */
 export enum NodApsMethod {
-  /** Mean nodes and apsides (Sun to Neptune; osculating for Pluto and beyond) */
+  /** Mean nodes and apsides (Moon, and Mercury to Neptune; osculating for Pluto and beyond) */
   Mean = 1,
   /** Osculating nodes and apsides */
   Osculating = 2,

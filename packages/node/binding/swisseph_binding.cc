@@ -340,13 +340,14 @@ Napi::Value RiseTrans(const Napi::CallbackInfo& info) {
   double atpress = info.Length() >= 6 ? info[5].As<Napi::Number>().DoubleValue() : 0.0;
   double attemp = info.Length() >= 7 ? info[6].As<Napi::Number>().DoubleValue() : 0.0;
 
-  double tret;
-  char serr[256];
+  double tret = 0;
+  char serr[256] = {0};
 
   // starname is NULL for planets (only used for fixed stars)
   int32 ret = swe_rise_trans(tjd_ut, ipl, NULL, epheflag, rsmi, geopos, atpress, attemp, &tret, serr);
 
-  if (ret < 0) {
+  // -2: no rise or set (circumpolar); returned to JavaScript, which explains it
+  if (ret < 0 && ret != -2) {
     Napi::Error::New(env, serr).ThrowAsJavaScriptException();
     return env.Undefined();
   }

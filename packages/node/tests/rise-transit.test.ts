@@ -63,4 +63,12 @@ describe('rise, transit and set', () => {
 
     expect(array).toBeCloseTo(single, 10);
   });
+
+  test('explains a day without sunrise (polar night)', () => {
+    // Tromsø, 69.65° N: the Sun stays below the horizon in mid-December
+    const tromso = julianDay(2025, 12, 15);
+    expect(() =>
+      calculateRiseTransitSet(tromso, Planet.Sun, RiseTransitFlag.Rise, 18.96, 69.65, 0)
+    ).toThrow(/circumpolar/);
+  });
 });

@@ -795,6 +795,7 @@ export function calculateRiseTransitSet(
   ) as [number, number];
 
   const [retFlag, time] = result;
+  if (retFlag === -2) throw new Error('No rise or set found: the body stays above or below the horizon at this place (circumpolar)');
 
   return {
     time,

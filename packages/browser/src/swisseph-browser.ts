@@ -718,6 +718,8 @@ export class SwissEphemeris {
     const m = this.module!;
     const ptrs = sizes.map((n) => m._malloc(n * 8));
     const serr = m._malloc(256);
+    // Start the error message empty, so a call that fails without one never reads leftover memory
+    m.setValue(serr, 0, 'i8');
     try {
       return run(ptrs, serr);
     } finally {
@@ -1029,6 +1031,7 @@ export class SwissEphemeris {
           serr,
         ]
       );
+      if (retflag === -2) throw new Error('No rise or set found: the body stays above or below the horizon at this place (circumpolar)');
       if (retflag < 0) throw new Error(m.UTF8ToString(serr));
       return { time: this._readDoubles(tret, 1)[0], eventType: retflag };
     });

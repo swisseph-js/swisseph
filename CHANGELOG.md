@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `calculateNodesAndApsides()` in `@swisseph/node` and `@swisseph/browser` (`swe_nod_aps_ut`), returning the ascending node, descending node, perihelion and aphelion of a body. `@swisseph/core` adds the `NodApsMethod` enum (mean, osculating, osculating barycentric, focal point) and the `NodesAndApsides` and `NodeApsidePosition` types.
 - Tests for rise, transit and set times and for nodes and apsides (`packages/node/tests/rise-transit.test.ts`, `packages/node/tests/nodes-apsides.test.ts`, `packages/browser/test/calculations.html`).
 
+### Fixed
+
+- `calculateRiseTransitSet()` throws a clear error when the body does not rise or set at the place (circumpolar, e.g. the Sun in polar night), instead of an empty or unreadable message.
+- `@swisseph/browser` clears the error buffer before each eclipse, rise/set and nodes call, so a failure never reports leftover memory.
+
 ## [1.4.0] - 2026-09-28
 
 ### Added

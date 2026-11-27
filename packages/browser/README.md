@@ -191,7 +191,15 @@ await swe.loadEphemerisFiles([
   { name: 'sepl_18.se1', url: 'https://your-cdn.com/sepl_18.se1' },
   { name: 'semo_18.se1', url: 'https://your-cdn.com/semo_18.se1' }
 ]);
+
+// Or give the bytes yourself (for example from your own cache). Names may
+// contain subdirectories, like numbered asteroids: ast0/se00433.se1
+await swe.loadEphemerisFiles([
+  { name: 'ast0/se00433.se1', data: bytes } // ArrayBuffer or Uint8Array
+]);
 ```
+
+`loadEphemerisFiles()` can be called again at any time to add files; Swiss Ephemeris reopens its files each time. Names with `..` segments, a leading `/`, backslashes or empty segments are rejected.
 
 **When to use Swiss Ephemeris files:**
 - Need JPL-level precision

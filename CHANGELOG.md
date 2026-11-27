@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `loadEphemerisFiles()` in `@swisseph/browser` accepts the file bytes (`{ name, data: ArrayBuffer | Uint8Array }`) as well as a URL (`{ name, url }`), and names with subdirectories such as `ast0/se00433.se1`, created under `/ephemeris`. Names with `..` segments, a leading `/`, backslashes or empty segments are rejected. It can be called again after earlier loads. The `EphemerisFile` type is exported.
+- Tests for `loadEphemerisFiles()` (`packages/browser/test/calculations.html`).
+
 ## [1.5.0] - 2026-11-25
 
 ### Added

@@ -117,19 +117,24 @@ const sun = swe.calculatePosition(jd, Planet.Sun, CalculationFlag.SwissEphemeris
 
 ### loadEphemerisFiles()
 
-Load custom ephemeris files from specified URLs.
+Load custom ephemeris files, downloaded from URLs or taken from bytes you already hold.
 
 ```typescript
-async loadEphemerisFiles(files: Array<{
-  name: string;
-  url: string;
-}>): Promise<void>
+type EphemerisFile =
+  | { name: string; url: string }
+  | { name: string; data: ArrayBuffer | Uint8Array };
+
+async loadEphemerisFiles(files: EphemerisFile[]): Promise<void>
 ```
 
 **Parameters:**
-- `files` - Array of file objects with `name` (filename) and `url` (download URL)
+- `files` - Array of file objects. `name` is the path relative to the ephemeris directory; give either `url` (download URL) or `data` (the file bytes, for example from your own cache)
 
 **Returns:** Promise that resolves when all files are loaded
+
+**File names:** A name may contain subdirectories, which are created under `/ephemeris`. This is the layout Swiss Ephemeris uses for numbered asteroids (`ast0/se00433.se1`). Names with `..` segments, a leading `/`, backslashes or empty segments are rejected with an error, before any file is written.
+
+**Loading more files later:** The method can be called again at any time, for example after earlier calculations. Each call sets the ephemeris path again, which makes Swiss Ephemeris close its open files, so files added later are found.
 
 **Example:**
 ```typescript
@@ -149,7 +154,13 @@ await swe.loadEphemerisFiles([
 ]);
 ```
 
-**Use case:** Self-hosting ephemeris files or using custom/extended ephemeris data.
+```typescript
+// Load a numbered asteroid on demand, from bytes in your own cache
+const bytes: Uint8Array = await cache.get('se00433.se1');
+await swe.loadEphemerisFiles([{ name: 'ast0/se00433.se1', data: bytes }]);
+```
+
+**Use case:** Self-hosting ephemeris files, loading from your own cache, or using custom/extended ephemeris data.
 
 ---
 

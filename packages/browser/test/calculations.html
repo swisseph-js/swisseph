@@ -540,6 +540,76 @@
                 });
             });
 
+            runner.describe('loadEphemerisFiles (bytes and subdirectories)', () => {
+                const readFile = (path) => swe.module.FS.readFile(path);
+                const sameBytes = (a, b) => a.length === b.length && a.every((value, i) => value === b[i]);
+
+                runner.test('should write a file given as a Uint8Array', async () => {
+                    const bytes = new Uint8Array([1, 2, 3, 4]);
+                    await swe.loadEphemerisFiles([{ name: 'test-flat.se1', data: bytes }]);
+
+                    expect(sameBytes(readFile('/ephemeris/test-flat.se1'), bytes)).toBe(true);
+                });
+
+                runner.test('should write a file given as an ArrayBuffer', async () => {
+                    const bytes = new Uint8Array([9, 8, 7]);
+                    await swe.loadEphemerisFiles([{ name: 'test-buffer.se1', data: bytes.buffer }]);
+
+                    expect(sameBytes(readFile('/ephemeris/test-buffer.se1'), bytes)).toBe(true);
+                });
+
+                runner.test('should create subdirectories such as ast0/ and keep working when called again', async () => {
+                    await swe.loadEphemerisFiles([{ name: 'ast0/se00433.se1', data: new Uint8Array([5, 6]) }]);
+                    await swe.loadEphemerisFiles([
+                        { name: 'ast0/se00434.se1', data: new Uint8Array([7]) },
+                        { name: 'ast1/deep/se01000.se1', data: new Uint8Array([8]) }
+                    ]);
+
+                    expect(readFile('/ephemeris/ast0/se00433.se1').length).toBe(2);
+                    expect(readFile('/ephemeris/ast0/se00434.se1').length).toBe(1);
+                    expect(readFile('/ephemeris/ast1/deep/se01000.se1').length).toBe(1);
+                });
+
+                runner.test('should still calculate after loading files', async () => {
+                    await swe.loadEphemerisFiles([{ name: 'test-after.se1', data: new Uint8Array([1]) }]);
+                    const sun = swe.calculatePosition(swe.julianDay(2000, 1, 1, 12), Planet.Sun);
+
+                    expect(sun.longitude).toBeGreaterThan(279);
+                    expect(sun.longitude).toBeLessThan(281);
+                });
+
+                runner.test('should reject unsafe file names and write nothing', async () => {
+                    const unsafe = ['../evil.se1', 'ast0/../../evil.se1', '/abs.se1', 'ast0\\se00433.se1', 'ast0//se00433.se1', 'ast0/', ''];
+                    for (const name of unsafe) {
+                        let message = null;
+                        try {
+                            await swe.loadEphemerisFiles([
+                                { name: 'test-never-written.se1', data: new Uint8Array([1]) },
+                                { name, data: new Uint8Array([1]) }
+                            ]);
+                        } catch (error) {
+                            message = error.message;
+                        }
+                        if (message === null || !message.includes('Unsafe ephemeris file name')) {
+                            throw new Error(`Expected ${JSON.stringify(name)} to be rejected, got ${message}`);
+                        }
+                    }
+                    let written = true;
+                    try { readFile('/ephemeris/test-never-written.se1'); } catch (e) { written = false; }
+                    expect(written).toBe(false);
+                });
+
+                runner.test('should reject a file with neither url nor data', async () => {
+                    let message = null;
+                    try {
+                        await swe.loadEphemerisFiles([{ name: 'test-empty.se1' }]);
+                    } catch (error) {
+                        message = error.message;
+                    }
+                    expect(message !== null && message.includes('needs a url or data')).toBe(true);
+                });
+            });
+
             // Swiss Ephemeris comparison tests
             runner.describe('Swiss Ephemeris vs Moshier', () => {
                 runner.test('should calculate similar Sun positions (within 1 arcsecond)', () => {

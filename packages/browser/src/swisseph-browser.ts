@@ -81,6 +81,30 @@ interface SwissEphModule extends EmscriptenModule {
 }
 
 /**
+ * A Swiss Ephemeris data file for loadEphemerisFiles()
+ *
+ * `name` is relative to the ephemeris directory and may contain subdirectories
+ * (for example `ast0/se00433.se1`). Give either a `url` to download or the file
+ * bytes in `data`.
+ */
+export type EphemerisFile =
+  | { name: string; url: string; data?: undefined }
+  | { name: string; data: ArrayBuffer | Uint8Array; url?: undefined };
+
+/** Reject names that are empty, absolute, use backslashes or climb out with `..` */
+function assertSafeEphemerisFileName(name: string): void {
+  const unsafe =
+    typeof name !== 'string' ||
+    name.length === 0 ||
+    name.startsWith('/') ||
+    name.includes('\\') ||
+    name.split('/').some((part) => part === '' || part === '.' || part === '..');
+  if (unsafe) {
+    throw new Error(`Unsafe ephemeris file name: ${JSON.stringify(name)}`);
+  }
+}
+
+/**
  * Swiss Ephemeris for browsers
  *
  * This class provides access to Swiss Ephemeris calculations in the browser
@@ -273,12 +297,22 @@ export class SwissEphemeris {
   }
 
   /**
-   * Load Swiss Ephemeris data files from URLs
+   * Load Swiss Ephemeris data files into the virtual filesystem
    *
-   * Downloads ephemeris files and writes them to the virtual filesystem.
-   * Use this for maximum precision calculations or custom file sources.
+   * Each file is either downloaded from a `url` or taken from bytes you already
+   * hold in `data` (for example from your own cache). Use this for maximum
+   * precision calculations or custom file sources.
    *
-   * @param files - Array of files to download with name and URL
+   * A `name` may contain subdirectories, which are created under `/ephemeris`.
+   * Numbered asteroid files use the Swiss Ephemeris layout, for example
+   * `ast0/se00433.se1`. Names with `..` segments, a leading `/`, backslashes or
+   * empty segments are rejected.
+   *
+   * It can be called again at any time, for example to load more files after
+   * the first calculations. Every call re-applies the ephemeris path, which
+   * makes Swiss Ephemeris close its open files so that new files are found.
+   *
+   * @param files - Files to load: `{ name, url }` or `{ name, data }`
    *
    * @example
    * // Load from custom CDN or server
@@ -293,36 +327,55 @@ export class SwissEphemeris {
    *   }
    * ]);
    *
+   * // Later, add a numbered asteroid from bytes you already hold
+   * await swe.loadEphemerisFiles([{ name: 'ast0/se00433.se1', data: bytes }]);
+   *
    * // Then use Swiss Ephemeris
    * const sun = swe.calculatePosition(jd, Planet.Sun, CalculationFlag.SwissEphemeris);
    */
-  async loadEphemerisFiles(
-    files: Array<{ name: string; url: string }>
-  ): Promise<void> {
+  async loadEphemerisFiles(files: EphemerisFile[]): Promise<void> {
     this._checkReady();
     const m = this.module!;
 
-    // Create ephemeris directory in virtual filesystem
-    try {
-      m.FS.mkdir('/ephemeris');
-    } catch (e) {
-      // Directory might already exist, ignore
+    // Validate every name before touching the filesystem or the network
+    for (const file of files) {
+      assertSafeEphemerisFileName(file.name);
     }
 
-    // Download and write each file
+    // Download or read, then write each file
     for (const file of files) {
-      const response = await fetch(file.url);
-      if (!response.ok) {
-        throw new Error(`Failed to download ${file.name}: ${response.statusText}`);
+      const { name, url, data: bytes } = file;
+      let data: Uint8Array;
+      if (bytes !== undefined) {
+        data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+      } else if (url !== undefined) {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to download ${name}: ${response.statusText}`);
+        }
+        data = new Uint8Array(await response.arrayBuffer());
+      } else {
+        throw new Error(`Ephemeris file ${name} needs a url or data`);
       }
 
-      const arrayBuffer = await response.arrayBuffer();
-      const data = new Uint8Array(arrayBuffer);
+      // Create /ephemeris and any subdirectories in the virtual filesystem
+      let directory = '/ephemeris';
+      const parts = name.split('/');
+      for (const part of ['', ...parts.slice(0, -1)]) {
+        directory = part ? `${directory}/${part}` : directory;
+        try {
+          m.FS.mkdir(directory);
+        } catch (e) {
+          // Directory might already exist, ignore
+        }
+      }
 
-      m.FS.writeFile(`/ephemeris/${file.name}`, data);
+      m.FS.writeFile(`/ephemeris/${name}`, data);
     }
 
-    // Set ephemeris path to virtual directory
+    // Set ephemeris path to virtual directory. Swiss Ephemeris closes its open
+    // files when the path is set, so files added after earlier calculations are
+    // picked up.
     this.setEphemerisPath('/ephemeris');
   }
 

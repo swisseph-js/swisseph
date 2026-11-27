@@ -214,6 +214,18 @@ await swe.loadEphemerisFiles([
 ]);
 ```
 
+### Files from your own cache, and subdirectories
+
+A file can also be given as bytes instead of a URL, and its name may contain subdirectories. Numbered asteroid files use the `ast<N>/se<NNNNN>.se1` layout, where the directory is the asteroid number divided by 1000:
+
+```typescript
+await swe.loadEphemerisFiles([
+  { name: 'ast0/se00433.se1', data: bytes } // ArrayBuffer or Uint8Array
+]);
+```
+
+The method can be called again later to add more files, for example when a chart needs another asteroid. Names with `..` segments, a leading `/`, backslashes or empty segments are rejected.
+
 ## Precision Comparison
 
 ### Accuracy

@@ -23,6 +23,7 @@ import {
   RiseTransitSet,
   NodApsMethod,
   NodesAndApsides,
+  FixedStarPosition,
   normalizeFlags,
   normalizeEclipseTypes,
   LunarEclipseImpl,
@@ -60,6 +61,7 @@ interface EmscriptenModule {
     args: any[]
   ) => any;
   allocateUTF8: (str: string) => number;
+  stringToUTF8: (str: string, ptr: number, maxBytesToWrite: number) => void;
   getValue: (ptr: number, type: string) => number;
   setValue: (ptr: number, value: number, type: string) => void;
   UTF8ToString: (ptr: number) => string;
@@ -1145,6 +1147,105 @@ export class SwissEphemeris {
         aphelion: position(aphe),
       };
     });
+  }
+
+  /**
+   * Calculate the position of a fixed star
+   *
+   * Same signature and result as `calculateFixedStar()` in `@swisseph/node`.
+   *
+   * The star catalogue `sefstars.txt` must be in the virtual filesystem first,
+   * even with the Moshier ephemeris: load it with `loadEphemerisFiles()`, for
+   * example `{ name: 'sefstars.txt', url: '.../sefstars.txt' }`. Without it the
+   * call throws the Swiss Ephemeris error.
+   *
+   * @param star - Star name: the traditional name ("Regulus"), the Bayer or
+   *   Flamsteed designation with a leading comma (",alLeo"), a name prefix ending
+   *   in "%" ("Regu%"), or a line number in the catalogue ("1" is the first star)
+   * @param julianDay - Julian day number in Universal Time
+   * @param flags - Calculation flags (default: Moshier with speed)
+   * @returns FixedStarPosition: the resolved star name, the position and the return flags
+   *
+   * @example
+   * await swe.loadEphemerisFiles([{ name: 'sefstars.txt', url: sefstarsUrl }]);
+   * const regulus = swe.calculateFixedStar('Regulus', jd);
+   * console.log(`${regulus.name}: ${regulus.longitude}°`); // "Regulus,alLeo: ~150°"
+   */
+  calculateFixedStar(
+    star: string,
+    julianDay: number,
+    flags: CalculationFlagInput = CommonCalculationFlags.DefaultMoshier
+  ): FixedStarPosition {
+    this._checkReady();
+
+    const normalizedFlags = normalizeFlags(flags);
+    const m = this.module!;
+    const starBuffer = this._allocStarBuffer(star);
+    try {
+      return this._withDoubles([6], ([xx], serr) => {
+        const retflag = m.ccall(
+          'swe_fixstar2_ut_wrap',
+          'number',
+          ['number', 'number', 'number', 'number', 'number'],
+          [starBuffer, julianDay, normalizedFlags, xx, serr]
+        );
+        if (retflag < 0) throw new Error(m.UTF8ToString(serr));
+
+        const v = this._readDoubles(xx, 6);
+        return {
+          name: m.UTF8ToString(starBuffer),
+          longitude: v[0],
+          latitude: v[1],
+          distance: v[2],
+          longitudeSpeed: v[3],
+          latitudeSpeed: v[4],
+          distanceSpeed: v[5],
+          flags: retflag,
+        };
+      });
+    } finally {
+      m._free(starBuffer);
+    }
+  }
+
+  /**
+   * Get the visual magnitude of a fixed star
+   *
+   * Needs `sefstars.txt` in the virtual filesystem, like `calculateFixedStar()`.
+   *
+   * @param star - Star name, in the same forms as `calculateFixedStar()`
+   * @returns Magnitude (smaller is brighter; Sirius is about -1.46)
+   *
+   * @example
+   * const magnitude = swe.getFixedStarMagnitude('Sirius'); // ~-1.46
+   */
+  getFixedStarMagnitude(star: string): number {
+    this._checkReady();
+
+    const m = this.module!;
+    const starBuffer = this._allocStarBuffer(star);
+    try {
+      return this._withDoubles([1], ([mag], serr) => {
+        const retflag = m.ccall(
+          'swe_fixstar2_mag_wrap',
+          'number',
+          ['number', 'number', 'number'],
+          [starBuffer, mag, serr]
+        );
+        if (retflag < 0) throw new Error(m.UTF8ToString(serr));
+        return this._readDoubles(mag, 1)[0];
+      });
+    } finally {
+      m._free(starBuffer);
+    }
+  }
+
+  /** A 256 byte buffer holding the star name; Swiss Ephemeris writes the resolved name back into it. */
+  private _allocStarBuffer(star: string): number {
+    const m = this.module!;
+    const buffer = m._malloc(256);
+    m.stringToUTF8(star, buffer, 256);
+    return buffer;
   }
 
   /**

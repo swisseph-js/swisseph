@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `loadEphemerisFiles()` in `@swisseph/browser` accepts the file bytes (`{ name, data: ArrayBuffer | Uint8Array }`) as well as a URL (`{ name, url }`), and names with subdirectories such as `ast0/se00433.se1`, created under `/ephemeris`. Names with `..` segments, a leading `/`, backslashes or empty segments are rejected. It can be called again after earlier loads. The `EphemerisFile` type is exported.
-- Tests for `loadEphemerisFiles()` (`packages/browser/test/calculations.html`).
+- `calculateFixedStar()` and `getFixedStarMagnitude()` in `@swisseph/node` and `@swisseph/browser` (`swe_fixstar2_ut`, `swe_fixstar2_mag`). `calculateFixedStar()` returns the resolved star name and the same position fields as `calculatePosition()`. `@swisseph/core` adds the `FixedStarPosition` type. In the browser, load `sefstars.txt` first with `loadEphemerisFiles()`.
+- Tests for `loadEphemerisFiles()` and fixed stars (`packages/node/tests/fixed-stars.test.ts`, `packages/browser/test/calculations.html`).
 
 ## [1.5.0] - 2026-11-25
 

@@ -268,6 +268,16 @@ export interface RiseTransitSet {
 }
 
 /**
+ * Position of a fixed star
+ * Result from calculateFixedStar(): the same fields as PlanetaryPosition, plus
+ * the star's resolved name.
+ */
+export interface FixedStarPosition extends PlanetaryPosition {
+  /** Resolved star name, in the form "traditional name,nomenclature name" (for example "Regulus,alLeo") */
+  name: string;
+}
+
+/**
  * Position of a planetary node or apsis
  * Same fields as PlanetaryPosition, without the return flags
  */

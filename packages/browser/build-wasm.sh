@@ -63,6 +63,8 @@ EXPORTED_FUNCTIONS='[
     "_swe_sidtime_wrap",
     "_swe_rise_trans_wrap",
     "_swe_nod_aps_ut_wrap",
+    "_swe_fixstar2_ut_wrap",
+    "_swe_fixstar2_mag_wrap",
     "_swe_close_wrap",
     "_swe_version_wrap",
     "_malloc",

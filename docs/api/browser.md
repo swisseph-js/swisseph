@@ -419,6 +419,62 @@ console.log(pluto.ascendingNode.longitude); // ~110.3° at J2000
 
 ---
 
+## Fixed Stars
+
+### calculateFixedStar()
+
+Calculate the position of a fixed star.
+
+```typescript
+swe.calculateFixedStar(
+  star: string,
+  julianDay: number,
+  flags?: CalculationFlagInput    // default: CalculationFlag.MoshierEphemeris with speed
+): FixedStarPosition
+```
+
+**Parameters:**
+- `star` - the traditional name (`"Regulus"`), the Bayer or Flamsteed designation with a leading comma (`",alLeo"`), a name prefix ending in `%` (`"Regu%"`, the first match in the catalogue) or a line number in the catalogue (`"1"` is the first star)
+- `julianDay` - Julian day number in Universal Time
+
+**Returns:** `{ name, longitude, latitude, distance, longitudeSpeed, latitudeSpeed, distanceSpeed, flags }`: the same fields as `PlanetaryPosition`, plus the resolved star `name` in the form `"Regulus,alLeo"`.
+
+**Errors:** throws the Swiss Ephemeris message when the star is not found or the catalogue is missing.
+
+The star catalogue `sefstars.txt` must be loaded first, even with the Moshier ephemeris (see [loadEphemerisFiles()](#loadephemerisfiles)); without it the call throws the Swiss Ephemeris error.
+
+**Example:**
+```typescript
+import { CalculationFlag } from '@swisseph/browser';
+
+await swe.loadEphemerisFiles([
+  { name: 'sefstars.txt', url: 'https://your-cdn.com/ephemeris/sefstars.txt' }
+]);
+
+const regulus = swe.calculateFixedStar(
+  'Regulus',
+  jd,
+  CalculationFlag.SwissEphemeris | CalculationFlag.Speed
+);
+console.log(regulus.name, regulus.longitude); // "Regulus,alLeo" ~149.8° at J2000
+```
+
+### getFixedStarMagnitude()
+
+Get the visual magnitude of a fixed star (smaller is brighter).
+
+```typescript
+swe.getFixedStarMagnitude(star: string): number
+```
+
+`star` takes the same forms as in `calculateFixedStar()`, and the same catalogue is needed.
+
+```typescript
+const magnitude = swe.getFixedStarMagnitude('Sirius'); // ~-1.46
+```
+
+---
+
 ## Rise, Transit and Set
 
 ### calculateRiseTransitSet()

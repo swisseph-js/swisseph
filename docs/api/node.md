@@ -283,6 +283,58 @@ console.log(pluto.ascendingNode.longitude); // ~110.3° at J2000
 
 ---
 
+## Fixed Stars
+
+### calculateFixedStar()
+
+Calculate the position of a fixed star.
+
+```typescript
+calculateFixedStar(
+  star: string,
+  julianDay: number,
+  flags?: CalculationFlagInput    // default: CalculationFlag.SwissEphemeris with speed
+): FixedStarPosition
+```
+
+**Parameters:**
+- `star` - the traditional name (`"Regulus"`), the Bayer or Flamsteed designation with a leading comma (`",alLeo"`), a name prefix ending in `%` (`"Regu%"`, the first match in the catalogue) or a line number in the catalogue (`"1"` is the first star)
+- `julianDay` - Julian day number in Universal Time
+
+**Returns:** `{ name, longitude, latitude, distance, longitudeSpeed, latitudeSpeed, distanceSpeed, flags }`: the same fields as `PlanetaryPosition`, plus the resolved star `name` in the form `"Regulus,alLeo"`.
+
+**Errors:** throws the Swiss Ephemeris message when the star is not found or the catalogue is missing.
+
+The star catalogue `sefstars.txt` is bundled with `@swisseph/node` and found automatically. If you set your own path with `setEphemerisPath()`, put `sefstars.txt` there.
+
+**Example:**
+```typescript
+import { calculateFixedStar, CalculationFlag } from '@swisseph/node';
+
+const regulus = calculateFixedStar(
+  'Regulus',
+  jd,
+  CalculationFlag.SwissEphemeris | CalculationFlag.Speed
+);
+console.log(regulus.name, regulus.longitude); // "Regulus,alLeo" ~149.8° at J2000
+```
+
+### getFixedStarMagnitude()
+
+Get the visual magnitude of a fixed star (smaller is brighter).
+
+```typescript
+getFixedStarMagnitude(star: string): number
+```
+
+`star` takes the same forms as in `calculateFixedStar()`, and the same catalogue is needed.
+
+```typescript
+const magnitude = getFixedStarMagnitude('Sirius'); // ~-1.46
+```
+
+---
+
 ## Rise, Transit and Set
 
 ### calculateRiseTransitSet()

@@ -40,6 +40,7 @@ export type {
   LunarEclipse,
   SolarEclipse,
   RiseTransitSet,
+  FixedStarPosition,
   NodeApsidePosition,
   NodesAndApsides,
 } from './results.js';

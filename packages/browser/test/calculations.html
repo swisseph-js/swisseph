@@ -610,6 +610,60 @@
                 });
             });
 
+            runner.describe('Fixed stars (needs sefstars.txt from the CDN)', () => {
+                const jd = swe.julianDay(2000, 1, 1, 12);
+                let starsLoaded = false;
+                const SEFSTARS_URL = 'https://cdn.jsdelivr.net/gh/aloistr/swisseph/ephe/sefstars.txt';
+
+                runner.test('should throw a clear error before sefstars.txt is loaded', () => {
+                    let message = null;
+                    try {
+                        swe.calculateFixedStar('Regulus', jd);
+                    } catch (error) {
+                        message = error.message;
+                    }
+                    // Only meaningful on a fresh page: a re-run after loading finds the catalogue
+                    if (message === null && !starsLoaded) throw new Error('Expected an error without sefstars.txt');
+                });
+
+                runner.test('should put Regulus near 149.8 degrees at J2000', async () => {
+                    await swe.loadEphemerisFiles([{ name: 'sefstars.txt', url: SEFSTARS_URL }]);
+                    starsLoaded = true;
+                    const regulus = swe.calculateFixedStar('Regulus', jd);
+
+                    expect(regulus.name).toBe('Regulus,alLeo');
+                    expect(regulus.longitude).toBeGreaterThan(149.7);
+                    expect(regulus.longitude).toBeLessThan(150.0);
+                    expect(regulus.latitude).toBeGreaterThan(0.3);
+                    expect(regulus.latitude).toBeLessThan(0.6);
+                    expect(regulus).toHaveProperty('longitudeSpeed');
+                    expect(regulus.flags).toBeGreaterThan(0);
+                });
+
+                runner.test('should find a star by Bayer designation and by name prefix', () => {
+                    const byName = swe.calculateFixedStar('Regulus', jd);
+                    const byBayer = swe.calculateFixedStar(',alLeo', jd);
+                    const byPrefix = swe.calculateFixedStar('Regu%', jd);
+
+                    expect(byBayer.longitude).toBeCloseTo(byName.longitude, 8);
+                    expect(byPrefix.name).toBe(byName.name);
+                });
+
+                runner.test('should throw for an unknown star', () => {
+                    let message = null;
+                    try {
+                        swe.calculateFixedStar('NoSuchStar', jd);
+                    } catch (error) {
+                        message = error.message;
+                    }
+                    expect(message !== null && /could not find star/i.test(message)).toBe(true);
+                });
+
+                runner.test('should return the magnitude of a star', () => {
+                    expect(swe.getFixedStarMagnitude('Sirius')).toBeCloseTo(-1.46, 1);
+                });
+            });
+
             // Swiss Ephemeris comparison tests
             runner.describe('Swiss Ephemeris vs Moshier', () => {
                 runner.test('should calculate similar Sun positions (within 1 arcsecond)', () => {

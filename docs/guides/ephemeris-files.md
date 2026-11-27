@@ -226,6 +226,17 @@ await swe.loadEphemerisFiles([
 
 The method can be called again later to add more files, for example when a chart needs another asteroid. Names with `..` segments, a leading `/`, backslashes or empty segments are rejected.
 
+### Fixed star catalogue
+
+`calculateFixedStar()` reads the star catalogue `sefstars.txt`. `@swisseph/node` bundles it. In the browser, load it like any other file (it is needed even with the Moshier ephemeris):
+
+```typescript
+await swe.loadEphemerisFiles([
+  { name: 'sefstars.txt', url: 'https://cdn.jsdelivr.net/gh/aloistr/swisseph/ephe/sefstars.txt' }
+]);
+const regulus = swe.calculateFixedStar('Regulus', jd);
+```
+
 ## Precision Comparison
 
 ### Accuracy

@@ -547,6 +547,57 @@ Napi::Value NodApsUt(const Napi::CallbackInfo& info) {
   return result;
 }
 
+// Wrapper for swe_fixstar2_ut: position of a fixed star
+// Args: star (name or line number), tjd_ut, iflag → [resolved name, 6 doubles, return flags]
+Napi::Value Fixstar2Ut(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 3, "Expected star, tjd_ut, iflag")) return env.Undefined();
+  if (!info[0].IsString()) {
+    Napi::TypeError::New(env, "String expected for star").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+  std::string star_in = info[0].As<Napi::String>().Utf8Value();
+  double tjd_ut = info[1].As<Napi::Number>().DoubleValue();
+  int32 iflag = info[2].As<Napi::Number>().Int32Value();
+  // The star buffer is also where swisseph returns the resolved name
+  char star[AS_MAXCH] = {0};
+  strncpy(star, star_in.c_str(), sizeof(star) - 1);
+  double xx[6] = {0};
+  char serr[256] = {0};
+  int32 ret = swe_fixstar2_ut(star, tjd_ut, iflag, xx, serr);
+  if (ret < 0) {
+    Napi::Error::New(env, serr).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+  Napi::Array result = Napi::Array::New(env, 3);
+  result[0u] = Napi::String::New(env, star);
+  result[1u] = DoubleArray(env, xx, 6);
+  result[2u] = Napi::Number::New(env, ret);
+  return result;
+}
+
+// Wrapper for swe_fixstar2_mag: magnitude of a fixed star
+// Args: star (name or line number) → magnitude
+Napi::Value Fixstar2Mag(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (!NeedArgs(info, 1, "Expected star")) return env.Undefined();
+  if (!info[0].IsString()) {
+    Napi::TypeError::New(env, "String expected for star").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+  std::string star_in = info[0].As<Napi::String>().Utf8Value();
+  char star[AS_MAXCH] = {0};
+  strncpy(star, star_in.c_str(), sizeof(star) - 1);
+  double mag = 0;
+  char serr[256] = {0};
+  int32 ret = swe_fixstar2_mag(star, &mag, serr);
+  if (ret < 0) {
+    Napi::Error::New(env, serr).ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+  return Napi::Number::New(env, mag);
+}
+
 // Initialize the addon
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("set_ephe_path", Napi::Function::New(env, SetEphePath));
@@ -571,6 +622,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("azalt", Napi::Function::New(env, Azalt));
   exports.Set("sidtime", Napi::Function::New(env, Sidtime));
   exports.Set("nod_aps_ut", Napi::Function::New(env, NodApsUt));
+  exports.Set("fixstar2_ut", Napi::Function::New(env, Fixstar2Ut));
+  exports.Set("fixstar2_mag", Napi::Function::New(env, Fixstar2Mag));
 
   return exports;
 }

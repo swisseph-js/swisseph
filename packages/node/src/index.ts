@@ -22,6 +22,7 @@ import {
   RiseTransitSet,
   NodApsMethod,
   NodesAndApsides,
+  FixedStarPosition,
   normalizeFlags,
   normalizeEclipseTypes,
   LunarEclipseImpl,
@@ -857,6 +858,80 @@ export function calculateNodesAndApsides(
     perihelion: position(peri),
     aphelion: position(aphe),
   };
+}
+
+/**
+ * Make sure the fixed star catalogue (sefstars.txt) can be found
+ *
+ * Fixed stars need the catalogue even with the Moshier ephemeris, so the bundled
+ * ephemeris path is used unless a path was set explicitly.
+ * @internal
+ */
+function ensureFixedStarCatalogue(): void {
+  if (!ephemerisPathSet) {
+    binding.set_ephe_path(getBundledEphemerisPath());
+    ephemerisPathSet = true;
+  }
+}
+
+/**
+ * Calculate the position of a fixed star
+ *
+ * Uses the star catalogue `sefstars.txt`, bundled with this package. If you set
+ * your own ephemeris path with `setEphemerisPath()`, put `sefstars.txt` there.
+ *
+ * @param star - Star name: the traditional name ("Regulus"), the Bayer or
+ *   Flamsteed designation with a leading comma (",alLeo"), a name prefix ending
+ *   in "%" ("Regu%"), or a line number in the catalogue ("1" is the first star)
+ * @param julianDay - Julian day number in Universal Time
+ * @param flags - Calculation flags (default: SwissEphemeris with speed)
+ * @returns FixedStarPosition: the resolved star name, the position and the return flags
+ * @throws Error when the star is not found or the catalogue is missing
+ *
+ * @example
+ * const regulus = calculateFixedStar('Regulus', jd);
+ * console.log(`${regulus.name}: ${regulus.longitude}°`); // "Regulus,alLeo: ~150°"
+ */
+export function calculateFixedStar(
+  star: string,
+  julianDay: number,
+  flags: CalculationFlagInput = CommonCalculationFlags.DefaultSwissEphemeris
+): FixedStarPosition {
+  const normalizedFlags = normalizeFlags(flags);
+  ensureEphemerisInitialized(normalizedFlags);
+  ensureFixedStarCatalogue();
+
+  const [name, xx, retFlags] = binding.fixstar2_ut(star, julianDay, normalizedFlags) as [
+    string,
+    number[],
+    number,
+  ];
+
+  return {
+    name,
+    longitude: xx[0],
+    latitude: xx[1],
+    distance: xx[2],
+    longitudeSpeed: xx[3],
+    latitudeSpeed: xx[4],
+    distanceSpeed: xx[5],
+    flags: retFlags,
+  };
+}
+
+/**
+ * Get the visual magnitude of a fixed star
+ *
+ * @param star - Star name, in the same forms as `calculateFixedStar()`
+ * @returns Magnitude (smaller is brighter; Sirius is about -1.46)
+ * @throws Error when the star is not found or the catalogue is missing
+ *
+ * @example
+ * const magnitude = getFixedStarMagnitude('Sirius'); // ~-1.46
+ */
+export function getFixedStarMagnitude(star: string): number {
+  ensureFixedStarCatalogue();
+  return binding.fixstar2_mag(star) as number;
 }
 
 /**

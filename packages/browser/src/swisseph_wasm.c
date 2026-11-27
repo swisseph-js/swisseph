@@ -116,6 +116,19 @@ int swe_nod_aps_ut_wrap(double tjd_ut, int ipl, int iflag, int method, double *x
     return swe_nod_aps_ut(tjd_ut, ipl, iflag, method, xnasc, xndsc, xperi, xaphe, serr);
 }
 
+// Fixed stars. star is a buffer of at least 256 bytes: it holds the star name or number
+// on input and, on success, the resolved name ("Regulus,alLeo"). xx holds 6 doubles.
+EMSCRIPTEN_KEEPALIVE
+int swe_fixstar2_ut_wrap(char *star, double tjd_ut, int iflag, double *xx, char *serr) {
+    return swe_fixstar2_ut(star, tjd_ut, iflag, xx, serr);
+}
+
+// Magnitude of a fixed star. star is a buffer of at least 256 bytes, as above; mag is one double.
+EMSCRIPTEN_KEEPALIVE
+int swe_fixstar2_mag_wrap(char *star, double *mag, char *serr) {
+    return swe_fixstar2_mag(star, mag, serr);
+}
+
 EMSCRIPTEN_KEEPALIVE
 void swe_close_wrap(void) {
     swe_close();

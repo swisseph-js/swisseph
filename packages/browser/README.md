@@ -116,6 +116,17 @@ swe.calculateNodesAndApsides(jd, body, method?, flags?)
 
 Methods (`NodApsMethod`): `Mean` (default), `Osculating`, `OsculatingBarycentric`, `FocalPoint` (combine with `|`).
 
+### Fixed Stars
+
+```typescript
+swe.calculateFixedStar(star, jd, flags?)
+// Returns: { name, longitude, latitude, distance, longitudeSpeed, latitudeSpeed, distanceSpeed, flags }
+swe.getFixedStarMagnitude(star)
+// Returns: the magnitude, e.g. about -1.46 for Sirius
+```
+
+`star` is a traditional name (`'Regulus'`), a Bayer designation (`',alLeo'`), a name prefix ending in `%` (`'Regu%'`) or a catalogue line number (`'1'`). The catalogue `sefstars.txt` is not bundled: load it first with `loadEphemerisFiles()`, e.g. `{ name: 'sefstars.txt', url: '...' }`.
+
 ### Rise, Transit and Set
 
 ```typescript
